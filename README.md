@@ -24,4 +24,3 @@ pip install -r requirements.txt
 ```bash
 streamlit run dashboard.py
 ```
-PRUEBA
