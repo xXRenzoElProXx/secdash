@@ -1,0 +1,55 @@
+{
+  "target": "google.com",
+  "ip": "142.251.0.139",
+  "activos_criticos": [
+    {
+      "nombre": "HTTPS en puerto 443",
+      "tipo": "servicio",
+      "riesgo": "bajo",
+      "razon": "Servicio esperado y necesario, gestionado por Google Web Server (gws) con infraestructura de clase mundial. No se detectan versiones vulnerables."
+    },
+    {
+      "nombre": "HTTP en puerto 80",
+      "tipo": "servicio",
+      "riesgo": "bajo",
+      "razon": "Puerto estándar para redirección a HTTPS. Esperado en infraestructura de Google."
+    },
+    {
+      "nombre": "Infraestructura DNS (ns1-ns4.google.com)",
+      "tipo": "endpoint",
+      "riesgo": "bajo",
+      "razon": "Servidores autoritativos propios de Google, redundancia alta, baja superficie de ataque externa."
+    },
+    {
+      "nombre": "Registro MX anómalo ('errdomain.')",
+      "tipo": "endpoint",
+      "riesgo": "medio",
+      "razon": "Artefacto de error en la consulta o configuración anómala que podría indicar problemas de configuración DNS o un comportamiento defensivo anti-enumeración."
+    },
+    {
+      "nombre": "Política SPF con ~all (softfail)",
+      "tipo": "servicio",
+      "riesgo": "bajo",
+      "razon": "Política de softfail en lugar de -all (hardfail) permite que correos falsificados pasen a evaluación adicional; aunque es práctica común de Google, podría permitir phishing más convincente."
+    }
+  ],
+  "prioridad": [
+    "Registro MX anómalo - requiere investigación para descartar misconfiguración o ataque DNS",
+    "Política SPF con softfail - considerar endurecer a -all para reducir suplantación de identidad",
+    "Servicios HTTP/HTTPS en puertos 80/443 - monitorizar para detectar cambios de versión o banners"
+  ],
+  "vectores_de_ataque": [
+    "Suplantación de identidad (phishing) aprovechando la política SPF softfail (~all) y el alto valor de marca de google.com, enviando correos que no son rechazados duramente",
+    "Ataques de subdomain takeover si alguno de los dominios verificados por terceros (DocuSign, Facebook, Apple, etc.) queda dangling con registros CNAME apuntando a servicios en desuso",
+    "Explotación de la superficie web mínima expuesta (puertos 80/443) si existieran vulnerabilidades en el balanceador o en gws, aunque es extremadamente improbable dado el equipo de seguridad de Google",
+    "Reconocimiento bloqueado pero potencialmente informativo: el timeout en enumeración de subdominios sugiere medidas anti-enumeración que podrían ser bypaseadas con técnicas de certificate transparency (crt.sh) o DNS brute-force distribuido",
+    "Ataques de ingeniería social aprovechando las verificaciones de dominio de terceros (facebook-domain-verification, apple-domain-verification) para legitimar dominios falsos"
+  ],
+  "superficie_total": "Superficie de ataque externa extremadamente reducida. Solo dos puertos TCP abiertos (80 y 443) ejecutando Google Web Server (gws), sin otros servicios expuestos. La infraestructura DNS es propia y autoritativa. El dominio está protegido por un registrador premium (MarkMonitor) especializado en protección de marca. No se detectaron versiones de software vulnerables, subdominios críticos expuestos ni servicios administrativos accesibles. Es uno de los activos digitales mejor protegidos del mundo, con una superficie de ataque mínima y altamente monitorizada.",
+  "recomendacion_inmediata": "Investigar la anomalía en el registro MX ('errdomain.') para confirmar si se trata de un artefacto de consulta DNS o de una configuración incorrecta real que podría afectar la entrega de correo electrónico. Aunque el riesgo general es bajo, una mala configuración MX en un dominio de alto valor como google.com debe corregirse de inmediato para evitar pérdida de correos legítimos o explotación para spam/phishing.",
+  "fuentes": [
+    "ag1.json",
+    "ag2.json"
+  ],
+  "timestamp": "2026-06-08T03:14:27.029451+00:00"
+}

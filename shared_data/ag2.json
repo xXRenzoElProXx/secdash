@@ -1,0 +1,23 @@
+{
+  "target": "google.com",
+  "ip": "142.251.0.139",
+  "services": [
+    {
+      "port": 80,
+      "protocol": "tcp",
+      "state": "open",
+      "service": "http",
+      "version": "gws"
+    },
+    {
+      "port": 443,
+      "protocol": "tcp",
+      "state": "open",
+      "service": "ssl/https",
+      "version": "gws"
+    }
+  ],
+  "os_detected": "No detectado (probablemente Linux, servidor Google)",
+  "resumen": "Servidor de Google (cj-in-f139.1e100.net) con puertos 80 (HTTP) y 443 (HTTPS) abiertos, ambos ejecutando gws (Google Web Server). 998 puertos TCP filtrados. No se detectó el sistema operativo. Las respuestas HTTP indican que es un servidor web de Google (gws) con cabeceras típicas como Content-Security-Policy, P3P, Set-Cookie de Google y X-Frame-Options SAMEORIGIN.",
+  "timestamp": "2026-06-08T03:13:59.449849+00:00"
+}
