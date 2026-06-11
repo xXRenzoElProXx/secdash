@@ -1,0 +1,14 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hola, soy tu mentor de seguridad. ¿En qué puedo ayudarte hoy?"
+  },
+  {
+    "role": "user",
+    "content": "\"¿Qué es el modelo de seguridad 'Zero Trust' y cómo lo aplico en una arquitectura de red pequeña?\""
+  },
+  {
+    "role": "assistant",
+    "content": "El \"Modelo Zero Trust\" es un enfoque de seguridad que implica la evaluación continua de cada usuario y objeto, incluyendo a las computadoras y los equipos físicos. \n\nEn términos de una arquitectura de red pequeña, puedes implementar el Zero Trust como sigue:\n\n1. **Identificación del Usuario**: Antes de permitir un acceso, se identifica el usuario y su papel en la organización.\n\n2. **Comprobación del Idioma de Accesso**: Cada usuario puede tener una aplicación de acceso a través de una aplicación que verifica si son autorizados para hacer uso del sistema.\n\n3. **Control de Sistemas Privados**: Solo los sistemas privados al que el usuario tiene permiso podrán acceder mediante un protocolo seguro (como HTTPS). Los accesos no autorizados serían bloqueados automáticamente.\n\n4. **Auditoria Real-time y Automática**: Se realizan auditorias constante para verificar que solo los usuarios con permisos son permitidos a realizar tareas específicas.\n\n5. **Implementación de Control de Seguridad Remoto**: Si el usuario no es identificado correctamente, se puede enviar un intento de acceso a un servidor externo usando técnicas como SSH y TSL para verificar la autoridad del usuario.\n\n6. **Límites de Privacidad**: Se limitan los datos que se pueden compartir con los usuarios, solo cuando estén autorizados para hacerlo.\n\n7. **Automatización de Seguridad**: El sistema puede automatizar las tasas de control de seguridad en tiempo real para garantizar un alto grado de confiabilidad y protección.\n\n8. **Seguridad de Privacidad Personal**: Los usuarios tienen la opción de configurar el sistema para que solo pueda acceder a ciertos tipos de datos si los usuarios lo determinan.\n\n9. **Administración Centralizada**: El proceso seAdministra de manera centralizada con una herramienta como Okta, Azure Active Directory (AD) o similar. \n\nAl implementar este modelo en tu red pequeña, se puede lograr un nivel muy alto de seguridad a través del control detallado cada vez que se accede al sistema."
+  }
+]

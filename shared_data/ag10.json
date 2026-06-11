@@ -1,0 +1,13 @@
+{
+  "estado_cumplimiento": "critico",
+  "normativa_evaluada": "OWASP Top 10",
+  "hallazgos": [
+    "El uso de autoindex puede permitir a los usuarios ver archivos sensibles en la raíz del servidor.",
+    "Los protocolos SSLv3 y TLSv1.0 son obsoletos y no seguros."
+  ],
+  "recomendaciones": [
+    "Desactivar autoindex para proteger la información sensible.",
+    "Actualizar los protocolos SSL/TLS a las últimas versiones seguras."
+  ],
+  "explicacion_resumida": "El uso de autoindex puede permitir a los usuarios ver archivos sensibles en la raíz del servidor, lo que puede ser peligroso. Además, los protocolos SSLv3 y TLSv1.0 son obsoletos y no seguros, por lo que se deben actualizar para garantizar la seguridad de la comunicación."
+}
