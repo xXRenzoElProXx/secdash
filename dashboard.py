@@ -9,6 +9,8 @@ Uso:
 import streamlit as st
 import json, os, subprocess
 
+from styles import inject_styles, inject_canvas, inject_clock   # ← módulo de estilos
+
 st.set_page_config(
     page_title="SecDash AI SOC",
     page_icon="🛡",
@@ -16,381 +18,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  ESTILOS
-# ══════════════════════════════════════════════════════════════════════════════
-
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;500&display=swap');
-
-/* ── Base ── */
-*, *::before, *::after { box-sizing: border-box; }
-html, body, [class*="css"] {
-    font-family: 'JetBrains Mono', monospace !important;
-    background: #040d06 !important;
-    color: #7dffb0 !important;
-}
-.stApp { background: #040d06 !important; }
-
-/* CRT lines — CSS-only, cero JS, muy ligero */
-.stApp::after {
-    content: "";
-    position: fixed; inset: 0;
-    background: repeating-linear-gradient(
-        180deg,
-        transparent 0px, transparent 3px,
-        rgba(0,0,0,0.055) 3px, rgba(0,0,0,0.055) 4px
-    );
-    pointer-events: none;
-    z-index: 9000;
-}
-
-/* ── Layout ── */
-.block-container {
-    padding-top: 0.8rem !important;
-    padding-left: 1.4rem !important;
-    padding-right: 1.4rem !important;
-    max-width: 1440px !important;
-}
-[data-testid="column"] { padding: 0 0.35rem !important; }
-#MainMenu, footer, header { visibility: hidden !important; }
-
-/* ── Sidebar ── */
-section[data-testid="stSidebar"] {
-    background: #020b04 !important;
-    border-right: 1px solid rgba(0,255,106,.13) !important;
-    width: 230px !important; min-width: 230px !important;
-}
-section[data-testid="stSidebar"] > div { background: transparent !important; padding: 0 !important; }
-[data-testid="collapsedControl"] {
-    color: #00ff6a !important; background: #020b04 !important;
-    border-right: 1px solid rgba(0,255,106,.12) !important;
-}
-
-/* ── Typography ── */
-h1,h2,h3 {
-    font-family: 'Orbitron', monospace !important;
-    color: #00ff6a !important;
-    text-shadow: 0 0 16px rgba(0,255,106,.4), 0 0 32px rgba(0,255,106,.12) !important;
-    letter-spacing: .08em !important;
-}
-h1 { font-size: 1.55rem !important; font-weight: 900 !important; }
-h2 { font-size: .95rem  !important; font-weight: 700 !important; }
-h3 { font-size: .82rem  !important; font-weight: 700 !important; }
-
-/* ── Metric cards ── */
-[data-testid="metric-container"] {
-    background: #050f07 !important;
-    border: 1px solid rgba(0,255,106,.18) !important;
-    border-top: 2px solid #00ff6a !important;
-    border-radius: 2px !important;
-    padding: .9rem !important;
-    position: relative; overflow: hidden;
-    box-shadow: 0 0 18px rgba(0,255,106,.05) !important;
-    transition: box-shadow .3s, transform .25s !important;
-}
-[data-testid="metric-container"]:hover {
-    box-shadow: 0 0 28px rgba(0,255,106,.15) !important;
-    transform: translateY(-2px) !important;
-}
-/* sweep line — CSS only */
-[data-testid="metric-container"]::before {
-    content: '';
-    position: absolute; top: 0; left: -100%; width: 60%; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0,255,106,.7), transparent);
-    animation: sweep 5s ease-in-out infinite;
-}
-@keyframes sweep { 0%{left:-60%} 60%{left:160%} 100%{left:160%} }
-
-[data-testid="stMetricValue"] {
-    font-family: 'Orbitron', monospace !important;
-    font-size: 1.45rem !important; font-weight: 700 !important;
-    color: #00ff6a !important;
-    text-shadow: 0 0 10px rgba(0,255,106,.5) !important;
-}
-[data-testid="stMetricLabel"] {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: .6rem !important; color: #4dcc7a !important;
-    letter-spacing: .14em !important; text-transform: uppercase !important;
-}
-[data-testid="stMetricDelta"] { font-family: 'JetBrains Mono', monospace !important; font-size: .66rem !important; }
-
-/* ── Buttons ── */
-.stButton > button {
-    background: transparent !important; color: #00ff6a !important;
-    border: 1px solid #00ff6a !important; border-radius: 2px !important;
-    font-family: 'Orbitron', monospace !important; font-size: .68rem !important;
-    font-weight: 700 !important; letter-spacing: .1em !important;
-    text-transform: uppercase !important; padding: .45rem 1.1rem !important;
-    transition: background .2s, box-shadow .2s, transform .15s !important;
-    box-shadow: 0 0 8px rgba(0,255,106,.15) !important;
-}
-.stButton > button:hover {
-    background: rgba(0,255,106,.08) !important;
-    box-shadow: 0 0 20px rgba(0,255,106,.35) !important;
-    transform: translateY(-1px) !important;
-}
-.stButton > button:active { transform: translateY(0) scale(.98) !important; }
-
-/* ── Text input ── */
-.stTextInput > div > div > input {
-    background: #050f07 !important; color: #00ff6a !important;
-    border: 1px solid rgba(0,255,106,.25) !important; border-radius: 2px !important;
-    font-family: 'JetBrains Mono', monospace !important; font-size: .8rem !important;
-    padding: .45rem .7rem !important;
-    transition: border-color .2s, box-shadow .2s !important;
-}
-.stTextInput > div > div > input:focus {
-    border-color: #00ff6a !important; box-shadow: 0 0 12px rgba(0,255,106,.2) !important; outline: none !important;
-}
-.stTextInput > div > div > input::placeholder { color: #265c36 !important; }
-.stTextInput label {
-    color: #4dcc7a !important; font-size: .6rem !important;
-    letter-spacing: .12em !important; text-transform: uppercase !important;
-}
-
-/* ── Divider ── */
-hr { border: none !important; border-top: 1px solid rgba(0,255,106,.1) !important; margin: 1.2rem 0 !important; }
-
-/* ── Expanders ── */
-.streamlit-expanderHeader {
-    background: #050f07 !important; border: 1px solid rgba(0,255,106,.12) !important;
-    border-radius: 2px !important; color: #7dffb0 !important;
-    font-family: 'JetBrains Mono', monospace !important; font-size: .72rem !important;
-    transition: background .2s !important;
-}
-.streamlit-expanderHeader:hover { background: #071509 !important; }
-.streamlit-expanderContent {
-    background: #030a04 !important; border: 1px solid rgba(0,255,106,.07) !important; border-top: none !important;
-}
-
-/* ── Dataframes ── */
-.stDataFrame { border: 1px solid rgba(0,255,106,.12) !important; border-radius: 2px !important; }
-.stDataFrame table { background: #030a04 !important; color: #7dffb0 !important; font-family: 'JetBrains Mono', monospace !important; font-size: .72rem !important; }
-.stDataFrame thead th {
-    background: #050f07 !important; color: #00ff6a !important;
-    font-family: 'Orbitron', monospace !important; font-size: .6rem !important;
-    letter-spacing: .07em !important; border-bottom: 1px solid rgba(0,255,106,.25) !important;
-}
-.stDataFrame tbody tr:hover { background: rgba(0,255,106,.03) !important; }
-
-/* ── Alerts ── */
-.stInfo,[data-testid="stInfo"] {
-    background:#030a04 !important; border:1px solid rgba(0,255,106,.12) !important;
-    border-left:3px solid rgba(0,255,106,.3) !important; border-radius:2px !important;
-    color:#4dcc7a !important; font-family:'JetBrains Mono',monospace !important; font-size:.7rem !important;
-}
-.stSuccess,[data-testid="stSuccess"] {
-    background:#030a04 !important; border:1px solid rgba(0,255,106,.25) !important;
-    border-left:3px solid #00ff6a !important; border-radius:2px !important;
-    color:#00ff6a !important; font-family:'JetBrains Mono',monospace !important; font-size:.7rem !important;
-}
-.stWarning,[data-testid="stWarning"] {
-    background:#0a0800 !important; border:1px solid rgba(255,204,0,.18) !important;
-    border-left:3px solid #ffcc00 !important; border-radius:2px !important;
-    color:#ffcc00 !important; font-family:'JetBrains Mono',monospace !important; font-size:.7rem !important;
-}
-.stError,[data-testid="stError"] {
-    background:#0a0000 !important; border:1px solid rgba(255,51,51,.18) !important;
-    border-left:3px solid #ff3333 !important; border-radius:2px !important;
-    color:#ff6666 !important; font-family:'JetBrains Mono',monospace !important; font-size:.7rem !important;
-}
-
-/* ── Progress ── */
-.stProgress > div > div > div {
-    background: linear-gradient(90deg, #00ff6a, #4dffaa) !important;
-    box-shadow: 0 0 6px rgba(0,255,106,.45) !important;
-}
-.stProgress > div > div { background: #050f07 !important; border: 1px solid rgba(0,255,106,.18) !important; border-radius: 2px !important; }
-
-/* ── Spinner ── */
-.stSpinner > div { border-color: #00ff6a transparent transparent transparent !important; }
-
-/* ── Chat ── */
-[data-testid="stChatMessageContent"] {
-    background: #050f07 !important; border: 1px solid rgba(0,255,106,.12) !important;
-    border-radius: 2px !important; font-family: 'JetBrains Mono', monospace !important;
-    font-size: .76rem !important; color: #7dffb0 !important;
-}
-[data-testid="stChatInput"] textarea {
-    background: #050f07 !important; color: #00ff6a !important;
-    border: 1px solid rgba(0,255,106,.25) !important; border-radius: 2px !important;
-    font-family: 'JetBrains Mono', monospace !important; font-size: .78rem !important;
-    transition: border-color .2s, box-shadow .2s !important;
-}
-[data-testid="stChatInput"] textarea:focus {
-    border-color: #00ff6a !important; box-shadow: 0 0 12px rgba(0,255,106,.16) !important;
-}
-
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: #030a04; }
-::-webkit-scrollbar-thumb { background: rgba(0,255,106,.25); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,255,106,.5); }
-
-/* ── Animations ── */
-@keyframes fadeUp   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-@keyframes fadeIn   { from{opacity:0} to{opacity:1} }
-@keyframes livePing {
-    0%   { box-shadow: 0 0 0 0 rgba(0,255,106,.55); }
-    70%  { box-shadow: 0 0 0 6px rgba(0,255,106,0); }
-    100% { box-shadow: 0 0 0 0 rgba(0,255,106,0);   }
-}
-@keyframes headerBar {
-    0%,100%{ width:32px; opacity:.9; }
-    50%     { width:72px; opacity:.5; }
-}
-
-/* ── Reusable classes ── */
-.anim-up  { animation: fadeUp  .5s ease both; }
-.anim-in  { animation: fadeIn  .6s ease both; }
-.d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.18s}.d4{animation-delay:.26s}
-
-.live-dot {
-    display:inline-block; width:7px; height:7px;
-    background:#00ff6a; border-radius:50%;
-    margin-right:5px; vertical-align:middle;
-    animation: livePing 1.8s ease-in-out infinite;
-}
-
-.sec-hdr {
-    font-family:'Orbitron',monospace; font-size:.6rem; font-weight:700;
-    color:#2a5c3a; letter-spacing:.2em; text-transform:uppercase;
-    border-bottom:1px solid rgba(0,255,106,.1); padding-bottom:5px; margin-bottom:12px;
-    position:relative;
-}
-.sec-hdr::after {
-    content:''; position:absolute; bottom:-1px; left:0;
-    height:1px; background:#00ff6a;
-    animation: headerBar 3s ease-in-out infinite;
-}
-
-/* ── Responsive ── */
-@media(max-width:768px){
-    .block-container{padding-left:.6rem !important;padding-right:.6rem !important;}
-    [data-testid="stMetricValue"]{font-size:1.05rem !important;}
-    section[data-testid="stSidebar"]{width:180px !important;min-width:180px !important;}
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  CANVAS — ligero: grid + partículas reducidas + sweep, sin blobs
-#  throttled a 30 fps para no saturar la CPU
-# ══════════════════════════════════════════════════════════════════════════════
-
-st.markdown("""
-<canvas id="soc-bg" style="
-    position:fixed;top:0;left:0;
-    width:100vw;height:100vh;
-    z-index:0;pointer-events:none;opacity:.45;
-"></canvas>
-<script>
-(function(){
-'use strict';
-const cv  = document.getElementById('soc-bg');
-if(!cv) return;
-const cx  = cv.getContext('2d');
-let W, H;
-
-function resize(){
-    W = cv.width  = window.innerWidth;
-    H = cv.height = window.innerHeight;
-}
-resize();
-window.addEventListener('resize', resize);
-
-/* ── grid ── */
-const CELL = 64;
-function drawGrid(){
-    cx.strokeStyle = 'rgba(0,255,106,.035)';
-    cx.lineWidth   = .5;
-    for(let x=0;x<W;x+=CELL){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke();}
-    for(let y=0;y<H;y+=CELL){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
-}
-
-/* ── sweep line ── */
-let sweepY = 0;
-function drawSweep(){
-    sweepY = (sweepY + .8) % H;
-    const g = cx.createLinearGradient(0, sweepY-36, 0, sweepY+4);
-    g.addColorStop(0,'rgba(0,255,106,0)');
-    g.addColorStop(1,'rgba(0,255,106,.055)');
-    cx.fillStyle = g;
-    cx.fillRect(0, sweepY-36, W, 40);
-    cx.strokeStyle = 'rgba(0,255,106,.14)';
-    cx.lineWidth   = .8;
-    cx.beginPath(); cx.moveTo(0,sweepY); cx.lineTo(W,sweepY); cx.stroke();
-}
-
-/* ── particles (reduced count) ── */
-const N  = 28;
-const pts = Array.from({length:N}, ()=>({
-    x:  Math.random()*1920,
-    y:  Math.random()*1080,
-    vx: (Math.random()-.5)*.28,
-    vy: (Math.random()-.5)*.28,
-    r:  Math.random()*1.4+.4,
-    a:  Math.random()*.5+.15,
-    ph: Math.random()*Math.PI*2,
-    fs: Math.random()*.04+.01,
-}));
-const LINK = 110;
-
-function drawParticles(){
-    /* links — only check N*(N-1)/2 = 378 pairs, cheap enough */
-    for(let i=0;i<N;i++){
-        for(let j=i+1;j<N;j++){
-            const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y;
-            const d2=dx*dx+dy*dy;
-            if(d2<LINK*LINK){
-                const a=.1*(1-Math.sqrt(d2)/LINK);
-                cx.strokeStyle=`rgba(0,255,106,${a})`;
-                cx.lineWidth=.55;
-                cx.beginPath(); cx.moveTo(pts[i].x,pts[i].y); cx.lineTo(pts[j].x,pts[j].y); cx.stroke();
-            }
-        }
-    }
-    pts.forEach(p=>{
-        p.ph+=p.fs;
-        cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        cx.fillStyle=`rgba(0,255,106,${p.a*(.6+.4*Math.sin(p.ph))})`;
-        cx.fill();
-        p.x+=p.vx; p.y+=p.vy;
-        if(p.x<0)p.x=W; if(p.x>W)p.x=0;
-        if(p.y<0)p.y=H; if(p.y>H)p.y=0;
-    });
-}
-
-/* ── corner HUD brackets ── */
-function drawBrackets(){
-    const s=20,p=18;
-    cx.strokeStyle='rgba(0,255,106,.22)'; cx.lineWidth=1.2;
-    [[p,p,1,1],[W-p,p,-1,1],[p,H-p,1,-1],[W-p,H-p,-1,-1]].forEach(([x,y,sx,sy])=>{
-        cx.beginPath();
-        cx.moveTo(x+sx*s,y); cx.lineTo(x,y); cx.lineTo(x,y+sy*s);
-        cx.stroke();
-    });
-}
-
-/* ── throttled loop at ~30 fps ── */
-let last = 0;
-function frame(ts){
-    if(ts - last >= 33){   /* ~30 fps */
-        last = ts;
-        cx.clearRect(0,0,W,H);
-        drawGrid();
-        drawSweep();
-        drawParticles();
-        drawBrackets();
-    }
-    requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
-})();
-</script>
-""", unsafe_allow_html=True)
+# ── Estilos y canvas ──────────────────────────────────────────────────────────
+inject_styles()
+inject_canvas()
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  HELPERS
@@ -399,7 +29,7 @@ requestAnimationFrame(frame);
 def load_json(n):
     p = os.path.join("shared_data", f"ag{n}.json")
     try:
-        with open(p) as f: return json.load(f)
+        with open(p, encoding='utf-8') as f: return json.load(f)
     except: return None
 
 def risk_icon(lvl):
@@ -410,30 +40,24 @@ def asset_row(a):
     c   = {"alto":"#ff6464","medio":"#ffcc44","bajo":"#00ff6a"}.get(lvl,"#4dcc7a")
     return (
         f'<div style="display:flex;gap:9px;padding:8px 10px;margin-bottom:5px;'
-        f'border:1px solid {c}18;border-left:3px solid {c};background:#030a04;'
-        f'transition:background .18s;" '
-        f'onmouseover="this.style.background=\'#071509\'" '
-        f'onmouseout="this.style.background=\'#030a04\'">'
+        f'border:1px solid {c}18;border-left:3px solid {c};background:#030a04;">'
         f'<span style="color:{c};font-size:.66rem;margin-top:2px;flex-shrink:0;">{risk_icon(lvl)}</span>'
         f'<div>'
         f'<div style="font-family:JetBrains Mono,monospace;color:{c};font-size:.72rem;font-weight:500;">'
         f'{a.get("nombre","")}</div>'
-        f'<div style="font-family:JetBrains Mono,monospace;color:#4dcc7a;font-size:.64rem;'
-        f'margin-top:1px;opacity:.85;">{a.get("razon","")}</div>'
+        f'<div style="font-family:JetBrains Mono,monospace;color:#4dcc7a;font-size:.64rem;margin-top:1px;opacity:.85;">'
+        f'{a.get("razon","")}</div>'
         f'</div></div>'
     )
 
 def ioc_row(ioc):
-    rep  = ioc.get("reputacion","")
-    c    = "#ff6464" if rep=="malicioso" else "#ffcc44" if rep=="sospechoso" else "#00ff6a"
-    lbl  = rep.upper() if rep else "UNKNOWN"
+    rep = ioc.get("reputacion","")
+    c   = "#ff6464" if rep=="malicioso" else "#ffcc44" if rep=="sospechoso" else "#00ff6a"
+    lbl = rep.upper() if rep else "UNKNOWN"
     return (
         f'<div style="display:flex;align-items:center;justify-content:space-between;'
         f'padding:7px 10px;margin-bottom:5px;'
-        f'border:1px solid {c}18;border-left:3px solid {c};background:#030a04;'
-        f'transition:background .18s;" '
-        f'onmouseover="this.style.background=\'#071509\'" '
-        f'onmouseout="this.style.background=\'#030a04\'">'
+        f'border:1px solid {c}18;border-left:3px solid {c};background:#030a04;">'
         f'<span style="font-family:JetBrains Mono,monospace;color:#7dffb0;font-size:.7rem;">'
         f'{ioc.get("ip","")}</span>'
         f'<div style="text-align:right;">'
@@ -449,12 +73,15 @@ def ioc_row(ioc):
 
 ag = {i: load_json(i) for i in range(1, 12)}
 
-# métricas
 activos_list = (ag[3] or {}).get("activos_criticos", [])
 altos = sum(1 for a in activos_list if a.get("riesgo") == "alto")
 riesgo = "ALTO" if altos >= 2 else ("MEDIO" if altos == 1 else "BAJO")
 
-if ag[2] and ag[3]:
+# Usar score del Agente 9 si está disponible, sino calcular básico
+if ag[9]:
+    score = ag[9].get("score_total", 0)
+    nivel = ag[9].get("nivel", "BAJO")
+elif ag[2] and ag[3]:
     svc = len(ag[2].get("services", []))
     score = min(100,
         svc * 5 + altos * 15 +
@@ -473,32 +100,33 @@ target      = (ag[1] or ag[2] or {}).get("target", "sin_objetivo")
 # ══════════════════════════════════════════════════════════════════════════════
 
 AGENT_LABELS = {
-    1:"DISCOVERY", 2:"NETWORK",  3:"SURFACE",  4:"WEB-BASIC",
-    5:"WEB-ADV",   6:"OWASP",    7:"CVE",       8:"THREAT",
-    9:"LATERAL",   10:"COMPLY",  11:"REPORT"
+    1:"DISCOVERY", 2:"NETWORK",  3:"SURFACE",  4:"NIKTO",
+    5:"NUCLEI",    6:"OWASP",    7:"CVE",       8:"THREAT",
+    9:"RISK",      10:"COMPLY",  11:"EXPLOITS"
 }
 NAV = [
-    ("OVERVIEW",     "Métricas / Agentes 1-3"),
-    ("NETWORK",      "Agente 2 — Integrante 1"),
-    ("WEB / OWASP",  "Agentes 4-6 — Int. 2/3"),
-    ("CVE INTEL",    "Agente 7 — Integrante 2"),
-    ("THREAT INTEL", "Agente 8 — Integrante 3"),
-    ("COMPLIANCE",   "Agente 10 — Integrante 3"),
-    ("SOC CHAT",     "Agente 12 — Integrante 4"),
+    ("OVERVIEW",    "Métricas / Agentes 1-3"),
+    ("NETWORK",     "Agente 2 — Servicios expuestos"),
+    ("WEB SCANS",   "Agentes 4-5 — Nikto & Nuclei"),
+    ("OWASP",       "Agente 6 — Clasificación Top 10"),
+    ("CVE INTEL",   "Agente 7 — Vulnerabilidades"),
+    ("THREAT INTEL","Agente 8 — Reputación IOCs"),
+    ("RISK SCORE",  "Agente 9 — Correlación 0-100"),
+    ("COMPLIANCE",  "Agente 10 — Controles"),
+    ("EXPLOITS",    "Agente 11 — Metasploit"),
+    ("SOC CHAT",    "Agente 12 — Asistente IA"),
 ]
 
 with st.sidebar:
-    # ── logo
     st.markdown(f"""
     <div style="padding:1.1rem 1rem .8rem;border-bottom:1px solid rgba(0,255,106,.1);">
         <div style="font-family:Orbitron,monospace;font-size:.95rem;font-weight:900;
-                    color:#00ff6a;letter-spacing:.1em;
-                    text-shadow:0 0 12px rgba(0,255,106,.45);">▶ SECDASH</div>
+                    color:#00ff6a;letter-spacing:.1em;text-shadow:0 0 12px rgba(0,255,106,.45);">
+            ▶ SECDASH</div>
         <div style="font-family:JetBrains Mono,monospace;font-size:.55rem;
                     color:#265c36;letter-spacing:.18em;margin-top:3px;">AI SOC PLATFORM</div>
     </div>""", unsafe_allow_html=True)
 
-    # ── status
     sc = "#00ff6a" if agentes_ok else "#ffcc00"
     sl = "OPERATIONAL" if agentes_ok else "STANDBY"
     st.markdown(f"""
@@ -516,7 +144,6 @@ with st.sidebar:
         </div>
     </div>""", unsafe_allow_html=True)
 
-    # ── target
     ip_line = f'IP: <span style="color:#4dcc7a;">{ag[1]["ip"]}</span>' if ag[1] else ""
     st.markdown(f"""
     <div style="padding:.75rem 1rem;border-bottom:1px solid rgba(0,255,106,.1);">
@@ -528,24 +155,20 @@ with st.sidebar:
                     color:#265c36;margin-top:3px;">{ip_line}</div>
     </div>""", unsafe_allow_html=True)
 
-    # ── nav
     st.markdown('<div style="padding:.6rem 1rem .2rem;">'
                 '<div style="font-family:JetBrains Mono,monospace;font-size:.55rem;'
                 'color:#265c36;letter-spacing:.16em;">NAVIGATION</div></div>',
                 unsafe_allow_html=True)
+
     for label, hint in NAV:
         st.markdown(f"""
-        <div style="padding:5px 1rem;border-left:2px solid transparent;cursor:default;
-                    transition:border-color .2s,background .2s;"
-             onmouseover="this.style.borderLeftColor='rgba(0,255,106,.35)';this.style.background='#071509';"
-             onmouseout="this.style.borderLeftColor='transparent';this.style.background='transparent';">
+        <div style="padding:5px 1rem;border-left:2px solid transparent;">
             <div style="font-family:Orbitron,monospace;font-size:.58rem;
                         font-weight:700;color:#4dcc7a;letter-spacing:.07em;">{label}</div>
             <div style="font-family:JetBrains Mono,monospace;font-size:.53rem;
                         color:#265c36;margin-top:1px;">{hint}</div>
         </div>""", unsafe_allow_html=True)
 
-    # ── agent checklist
     st.markdown('<div style="padding:.7rem 1rem .2rem;border-top:1px solid rgba(0,255,106,.08);">'
                 '<div style="font-family:JetBrains Mono,monospace;font-size:.55rem;'
                 'color:#265c36;letter-spacing:.16em;margin-bottom:5px;">AGENT STATUS</div>',
@@ -568,19 +191,10 @@ with st.sidebar:
 
 st.markdown(f"""
 <div class="anim-up" style="
-    border:1px solid rgba(0,255,106,.2);
-    border-top:2px solid #00ff6a;
+    border:1px solid rgba(0,255,106,.2); border-top:2px solid #00ff6a;
     background:linear-gradient(135deg,#030e05,#040d06 70%,#050f07);
-    padding:1rem 1.3rem;margin-bottom:1.1rem;
-    position:relative;overflow:hidden;
-">
-    <!-- grid lines decorativo -->
-    <div style="position:absolute;inset:0;
-        background:repeating-linear-gradient(90deg,
-            transparent,transparent 63px,
-            rgba(0,255,106,.01) 63px,rgba(0,255,106,.01) 64px);
-        pointer-events:none;"></div>
-
+    padding:1rem 1.3rem; margin-bottom:1.1rem;
+    position:relative; overflow:hidden;">
     <div style="display:flex;align-items:center;justify-content:space-between;
                 flex-wrap:wrap;gap:.6rem;position:relative;">
         <div>
@@ -610,18 +224,9 @@ st.markdown(f"""
         </div>
     </div>
 </div>
-
-<script>
-(function tick(){{
-    const el=document.getElementById('soc-clock');
-    if(el){{const n=new Date();
-        el.textContent=[n.getUTCHours(),n.getUTCMinutes(),n.getUTCSeconds()]
-            .map(v=>String(v).padStart(2,'0')).join(':') + ' UTC';
-    }}
-    setTimeout(tick,1000);
-}})();
-</script>
 """, unsafe_allow_html=True)
+
+inject_clock()
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  TARGET ACQUISITION
@@ -635,24 +240,61 @@ with col_inp:
                                   placeholder="example.com or 192.168.1.1")
 with col_btn:
     st.markdown("<br>", unsafe_allow_html=True)
-    run_btn = st.button("▶ EXECUTE AGENTS 1–3")
+    run_btn = st.button("▶ EXECUTE ALL AGENTS")
 
 if run_btn:
     try:
         bar = st.progress(0)
+        status_text = st.empty()
+        
         steps = [
-            ("[ AG1 ] Asset discovery...",    ["python","integrante1/agent1_discovery.py", target_input], 33),
-            ("[ AG2 ] Network scan...",        ["python","integrante1/agent2_network.py"],                 66),
-            ("[ AG3 ] Attack surface...",      ["python","integrante1/agent3_surface.py"],                100),
+            ("AG1: Asset discovery",           ["python","integrante1/agent1_discovery.py", target_input], 9),
+            ("AG2: Network scan",              ["python","integrante1/agent2_network.py"],                 18),
+            ("AG3: Attack surface",            ["python","integrante1/agent3_surface.py"],                 27),
+            ("AG4: Nikto scan (mock)",         ["python","integrante2/agent4_nikto.py", "--mock"],         36),
+            ("AG5: Nuclei scan (mock)",        ["python","integrante2/agent5_nuclei.py", "--mock"],        45),
+            ("AG6: OWASP classifier",          ["python","integrante2/agent6_owasp_classifier.py"],        54),
+            ("AG7: CVE intelligence",          ["python","integrante3/agent7_cve_intelligence.py"],        63),
+            ("AG8: Threat intelligence",       ["python","integrante3/agent8_threat_intel.py"],            72),
+            ("AG9: Risk correlation",          ["python","integrante3/agent9_risk_correlation.py"],        81),
+            ("AG10: Compliance check",         ["python","integrante4/agent10_compliance.py"],             90),
+            ("AG11: Metasploit advisory",      ["python","integrante4/agent11_metasploit.py"],            100),
         ]
+        
+        success_count = 0
+        failed_agents = []
+        
         for msg, cmd, pct in steps:
-            with st.spinner(msg):
-                subprocess.run(cmd, check=True)
-            bar.progress(pct)
-        st.success("✓ ALL AGENTS COMPLETED — DATA SYNCHRONIZED")
+            status_text.text(f"🔄 Ejecutando {msg}...")
+            try:
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=120)  # Aumentado a 120 segundos
+                bar.progress(pct)
+                success_count += 1
+            except subprocess.TimeoutExpired:
+                failed_agents.append(f"{msg} (timeout > 2min)")
+                bar.progress(pct)
+            except subprocess.CalledProcessError as e:
+                error_msg = e.stderr[:100] if e.stderr else str(e)[:100]
+                failed_agents.append(f"{msg} (error: {error_msg})")
+                bar.progress(pct)
+            except Exception as e:
+                failed_agents.append(f"{msg} ({str(e)[:50]})")
+                bar.progress(pct)
+        
+        status_text.empty()
+        
+        if failed_agents:
+            st.warning(f"⚠️ {success_count}/11 agentes completados. Fallos: {', '.join(failed_agents)}")
+        else:
+            st.success(f"✅ {success_count}/11 AGENTES COMPLETADOS — DATOS ACTUALIZADOS")
+        
+        st.info("🔄 Recargando dashboard en 2 segundos...")
+        import time
+        time.sleep(2)
         st.rerun()
+        
     except Exception as e:
-        st.error(f"EXECUTION FAILURE: {e}")
+        st.error(f"❌ ERROR: {e}")
 
 if ag[1]:
     st.markdown(
@@ -666,13 +308,16 @@ if ag[1]:
 
 st.divider()
 
-# ── Raw JSON dumps
+# ── Raw JSON
 st.markdown('<div class="sec-hdr">// RAW AGENT OUTPUT</div>', unsafe_allow_html=True)
 c1, c2, c3 = st.columns(3)
 for col, n, lbl in [(c1,1,"AG1 :: DISCOVERY"),(c2,2,"AG2 :: NETWORK"),(c3,3,"AG3 :: SURFACE")]:
     with col:
         with st.expander(f"[ {lbl} ]"):
-            st.json(ag[n]) if ag[n] else st.info(f"ag{n}.json not found")
+            if ag[n]:
+                st.json(ag[n])
+            else:
+                st.info(f"ag{n}.json not found")
 
 st.divider()
 
@@ -682,7 +327,7 @@ st.divider()
 
 st.markdown('<div class="sec-hdr">// THREAT METRICS</div>', unsafe_allow_html=True)
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("RISK SCORE",   f"{score}/100" if score != "—" else score, nivel if nivel != "—" else None)
+m1.metric("RISK SCORE",    f"{score}/100" if score != "—" else score, nivel if nivel != "—" else None)
 m2.metric("CVEs DETECTED", len((ag[7] or {}).get("cves_encontrados", [])))
 m3.metric("WEB FINDINGS",  len((ag[4] or {}).get("hallazgos", [])) + len((ag[5] or {}).get("hallazgos", [])))
 m4.metric("OPEN PORTS",    len((ag[2] or {}).get("services", [])))
@@ -697,14 +342,47 @@ cn, co = st.columns(2)
 with cn:
     st.markdown('<div class="sec-hdr">// EXPOSED SERVICES</div>', unsafe_allow_html=True)
     svcs = (ag[2] or {}).get("services", [])
-    st.dataframe(svcs, use_container_width=True, hide_index=True) if svcs \
-        else st.info("PENDING — run agent 2")
+    if svcs:
+        st.dataframe(svcs, width='stretch', hide_index=True)
+    else:
+        st.info("PENDING — run agent 2")
 
 with co:
     st.markdown('<div class="sec-hdr">// OWASP TOP 10 HEATMAP</div>', unsafe_allow_html=True)
     hmap = (ag[6] or {}).get("heatmap_owasp", {})
-    st.bar_chart(hmap) if hmap \
-        else st.info("PENDING — awaiting agent 6 (Integrante 2/3)")
+    if hmap:
+        st.bar_chart(hmap)
+    else:
+        st.info("PENDING — awaiting agent 6 (Integrante 2/3)")
+
+st.divider()
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  WEB VULNERABILITY SCANS (AGENTS 4 & 5)
+# ══════════════════════════════════════════════════════════════════════════════
+
+st.markdown('<div class="sec-hdr">// WEB VULNERABILITY ASSESSMENT</div>', unsafe_allow_html=True)
+
+w1, w2 = st.columns(2)
+with w1:
+    st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-bottom:.5rem;">[ NIKTO SCAN ]</div>', unsafe_allow_html=True)
+    hallazgos_ag4 = (ag[4] or {}).get("hallazgos", [])
+    if hallazgos_ag4:
+        st.dataframe(hallazgos_ag4, width="stretch", hide_index=True)
+        total_ag4 = len(hallazgos_ag4)
+        st.caption(f"✓ {total_ag4} hallazgos detectados por Nikto")
+    else:
+        st.info("PENDING — run agent 4 (Nikto scan)")
+
+with w2:
+    st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-bottom:.5rem;">[ NUCLEI TEMPLATES ]</div>', unsafe_allow_html=True)
+    hallazgos_ag5 = (ag[5] or {}).get("hallazgos", [])
+    if hallazgos_ag5:
+        st.dataframe(hallazgos_ag5, width="stretch", hide_index=True)
+        total_ag5 = len(hallazgos_ag5)
+        st.caption(f"✓ {total_ag5} hallazgos detectados por Nuclei")
+    else:
+        st.info("PENDING — run agent 5 (Nuclei scan)")
 
 st.divider()
 
@@ -716,8 +394,10 @@ cc, ca = st.columns(2)
 with cc:
     st.markdown('<div class="sec-hdr">// CVE INTELLIGENCE</div>', unsafe_allow_html=True)
     cves = (ag[7] or {}).get("cves_encontrados", [])
-    st.dataframe(cves, use_container_width=True, hide_index=True) if cves \
-        else st.info("PENDING — awaiting agent 7 (Integrante 2)")
+    if cves:
+        st.dataframe(cves, width="stretch", hide_index=True)
+    else:
+        st.info("PENDING — awaiting agent 7 (Integrante 3)")
 
 with ca:
     st.markdown('<div class="sec-hdr">// CRITICAL ASSETS</div>', unsafe_allow_html=True)
@@ -726,7 +406,168 @@ with ca:
     else:
         st.info("PENDING — run agent 3")
 
-# recomendación prioritaria
+# ══════════════════════════════════════════════════════════════════════════════
+#  SECURITY ANALYSIS (AG2 & AG3 ENHANCEMENTS)
+# ══════════════════════════════════════════════════════════════════════════════
+
+st.divider()
+st.markdown('<div class="sec-hdr">// FIREWALL & IDS DETECTION</div>', unsafe_allow_html=True)
+
+if ag[2]:
+    fw_data = ag[2].get('firewall_ids_detection', {})
+    ssl_services = ag[2].get('ssl_tls_services', [])
+    security_issues = ag[2].get('security_issues', [])
+    
+    # Métricas de firewall/IDS
+    f1, f2, f3, f4 = st.columns(4)
+    f1.metric("FIREWALL", "DETECTED" if fw_data.get('firewall_present') else "NOT DETECTED", 
+              delta="Active" if fw_data.get('firewall_present') else None)
+    f2.metric("IDS/IPS", "DETECTED" if fw_data.get('ids_ips_detected') else "NOT DETECTED",
+              delta="Active" if fw_data.get('ids_ips_detected') else None)
+    f3.metric("FILTERED PORTS", fw_data.get('filtered_ports', 0))
+    f4.metric("SSL/TLS SERVICES", len(ssl_services))
+    
+    # Evidencia de firewall
+    if fw_data.get('evidence'):
+        st.markdown(
+            f'<div style="border:1px solid rgba(0,255,106,.15);background:#030e05;'
+            f'padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:.68rem;'
+            f'color:#7dffb0;margin-top:.8rem;">'
+            f'<span style="color:#00ff6a;font-size:.6rem;letter-spacing:.1em;">🔥 FIREWALL EVIDENCE</span><br>'
+            f'<span style="margin-top:4px;display:block;">{fw_data.get("evidence", "")}</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+    
+    # Servicios SSL/TLS
+    if ssl_services:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1rem;margin-bottom:.5rem;">[ SSL/TLS CONFIGURATION ]</div>', unsafe_allow_html=True)
+        st.dataframe(ssl_services, width="stretch", hide_index=True)
+    
+    # Security Issues
+    if security_issues:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#ff6464;margin-top:1rem;margin-bottom:.5rem;">[ SECURITY ISSUES DETECTED ]</div>', unsafe_allow_html=True)
+        for issue in security_issues:
+            st.markdown(
+                f'<div style="padding:8px 12px;margin-bottom:5px;'
+                f'border:1px solid rgba(255,100,100,.2);border-left:3px solid #ff6464;'
+                f'background:#0a0404;font-family:JetBrains Mono,monospace;font-size:.68rem;color:#ff9999;">'
+                f'⚠️ {issue}</div>',
+                unsafe_allow_html=True
+            )
+else:
+    st.info("PENDING — awaiting agent 2 (Network Scan)")
+
+st.divider()
+st.markdown('<div class="sec-hdr">// ACCESS CONTROL & HARDENING ANALYSIS</div>', unsafe_allow_html=True)
+
+if ag[3]:
+    ctrl_data = ag[3].get('control_acceso', {})
+    hard_data = ag[3].get('hardening_analysis', {})
+    post_exp = ag[3].get('post_exploitation_vectors', [])
+    
+    # Sección de Control de Acceso
+    st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-bottom:.5rem;">[ ACCESS CONTROL MODEL ]</div>', unsafe_allow_html=True)
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        modelo = ctrl_data.get('modelo_detectado', 'desconocido')
+        st.markdown(
+            f'<div style="border:1px solid rgba(0,255,106,.15);background:#030e05;'
+            f'padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:.72rem;color:#7dffb0;">'
+            f'<span style="color:#265c36;font-size:.6rem;">MODEL DETECTED</span><br>'
+            f'<span style="color:#00ff6a;font-size:.85rem;font-weight:600;">{modelo.upper()}</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        
+        # Servicios sin autenticación
+        sin_auth = ctrl_data.get('servicios_sin_autenticacion', [])
+        if sin_auth:
+            st.markdown('<div style="margin-top:.8rem;font-family:JetBrains Mono,monospace;font-size:.65rem;color:#ff6464;">🔓 SERVICES WITHOUT AUTH:</div>', unsafe_allow_html=True)
+            for srv in sin_auth:
+                st.markdown(f'<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:#ff9999;padding-left:1rem;">• {srv}</div>', unsafe_allow_html=True)
+    
+    with c2:
+        # Puertos administrativos expuestos
+        admin_ports = ctrl_data.get('puertos_administrativos_expuestos', [])
+        if admin_ports:
+            st.markdown(
+                f'<div style="border:1px solid rgba(255,204,0,.2);background:#0a0800;'
+                f'padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:.68rem;color:#ffcc00;">'
+                f'<span style="color:#7a6600;font-size:.6rem;">⚠️ ADMIN PORTS EXPOSED</span><br>'
+                f'<span style="color:#ffcc00;font-size:.75rem;">{", ".join(map(str, admin_ports))}</span>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+    
+    # Recomendaciones ACL
+    acl_recs = ctrl_data.get('recomendaciones_acl', [])
+    if acl_recs:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1rem;margin-bottom:.5rem;">[ ACL RECOMMENDATIONS ]</div>', unsafe_allow_html=True)
+        for rec in acl_recs:
+            st.markdown(
+                f'<div style="padding:7px 12px;margin-bottom:4px;'
+                f'border-left:2px solid #00ff6a;background:#030e05;'
+                f'font-family:JetBrains Mono,monospace;font-size:.66rem;color:#7dffb0;">'
+                f'✓ {rec}</div>',
+                unsafe_allow_html=True
+            )
+    
+    # Hardening Analysis
+    st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#ffcc00;margin-top:1.2rem;margin-bottom:.5rem;">[ HARDENING STATUS ]</div>', unsafe_allow_html=True)
+    
+    h1, h2, h3 = st.columns(3)
+    with h1:
+        srv_innec = hard_data.get('servicios_innecesarios', [])
+        st.metric("UNNECESSARY SERVICES", len(srv_innec))
+        if srv_innec:
+            for srv in srv_innec[:3]:
+                st.caption(f"• {srv}")
+    
+    with h2:
+        proto_inseg = hard_data.get('protocolos_inseguros', [])
+        st.metric("INSECURE PROTOCOLS", len(proto_inseg))
+        if proto_inseg:
+            for proto in proto_inseg[:3]:
+                st.caption(f"• {proto}")
+    
+    with h3:
+        seg_status = "NO" if hard_data.get('falta_segmentacion') else "YES"
+        seg_color = "#ff6464" if hard_data.get('falta_segmentacion') else "#00ff6a"
+        st.markdown(
+            f'<div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:#7a7a7a;">NETWORK SEGMENTATION</div>'
+            f'<div style="font-family:Orbitron,monospace;font-size:1.2rem;color:{seg_color};font-weight:700;">{seg_status}</div>',
+            unsafe_allow_html=True
+        )
+    
+    # Medidas de hardening sugeridas
+    medidas = hard_data.get('medidas_sugeridas', [])
+    if medidas:
+        st.markdown('<div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:#ffcc00;margin-top:.8rem;">📋 HARDENING MEASURES:</div>', unsafe_allow_html=True)
+        for medida in medidas:
+            st.markdown(
+                f'<div style="padding:6px 10px;margin-bottom:3px;'
+                f'border-left:2px solid #ffcc00;background:#0a0800;'
+                f'font-family:JetBrains Mono,monospace;font-size:.64rem;color:#ffdd77;">'
+                f'→ {medida}</div>',
+                unsafe_allow_html=True
+            )
+    
+    # Post-Exploitation Vectors
+    if post_exp:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#ff6464;margin-top:1.2rem;margin-bottom:.5rem;">[ POST-EXPLOITATION VECTORS ]</div>', unsafe_allow_html=True)
+        for i, vector in enumerate(post_exp, 1):
+            st.markdown(
+                f'<div style="padding:9px 12px;margin-bottom:5px;'
+                f'border:1px solid rgba(255,100,100,.2);border-left:3px solid #ff6464;'
+                f'background:#0a0404;font-family:JetBrains Mono,monospace;font-size:.68rem;color:#ff9999;">'
+                f'<span style="color:#ff6464;font-weight:600;">#{i}</span> {vector}</div>',
+                unsafe_allow_html=True
+            )
+else:
+    st.info("PENDING — awaiting agent 3 (Attack Surface)")
+
 if ag[3]:
     rec = ag[3].get("recomendacion_inmediata","")
     if rec:
@@ -743,31 +584,574 @@ if ag[3]:
 st.divider()
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  COMPLIANCE & THREAT INTEL
+#  INTEGRANTE 3 — CVE & THREAT INTEL DASHBOARD
 # ══════════════════════════════════════════════════════════════════════════════
 
-cmp, thr = st.columns(2)
-with cmp:
-    st.markdown('<div class="sec-hdr">// COMPLIANCE STATUS</div>', unsafe_allow_html=True)
-    checks  = (ag[10] or {}).get("compliance_checks", [])
-    res10   = (ag[10] or {}).get("resumen", {})
-    if checks:
-        if res10:
-            r1,r2,r3 = st.columns(3)
-            r1.metric("TOTAL",  res10.get("total","—"))
-            r2.metric("✓ PASS", res10.get("cumple","—"))
-            r3.metric("✕ FAIL", res10.get("falla","—"))
-        st.dataframe(checks, use_container_width=True, hide_index=True)
-    else:
-        st.info("PENDING — awaiting agent 10 (Integrante 3)")
+st.markdown('<div class="sec-hdr">// INTEGRANTE 3 — INTELLIGENCE & RISK ANALYSIS</div>', unsafe_allow_html=True)
 
-with thr:
-    st.markdown('<div class="sec-hdr">// THREAT INTELLIGENCE IOCs</div>', unsafe_allow_html=True)
-    iocs = (ag[8] or {}).get("iocs", [])
+# CVE Analysis Metrics (Agent 7)
+if ag[7]:
+    st.markdown('<div style="font-family:Orbitron,monospace;font-size:.75rem;color:#00ff6a;margin-bottom:.7rem;">[ CVE INTELLIGENCE SUMMARY ]</div>', unsafe_allow_html=True)
+    
+    analisis_cvss = ag[7].get("analisis_cvss", {})
+    vuln_especiales = ag[7].get("vulnerabilidades_especiales", {})
+    
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("CRITICAL", analisis_cvss.get("critical", 0))
+    c2.metric("HIGH", analisis_cvss.get("high", 0))
+    c3.metric("MEDIUM", analisis_cvss.get("medium", 0))
+    c4.metric("AVG SCORE", analisis_cvss.get("avg_score", 0))
+    c5.metric("TOTAL CVEs", ag[7].get("total_cves", 0))
+    
+    # Zero-day y Supply Chain
+    if vuln_especiales.get("zero_day_count", 0) > 0 or vuln_especiales.get("supply_chain_count", 0) > 0:
+        st.markdown('<div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:#ff6464;margin-top:.8rem;">🚨 SPECIAL VULNERABILITIES:</div>', unsafe_allow_html=True)
+        
+        s1, s2 = st.columns(2)
+        with s1:
+            if vuln_especiales.get("zero_day_count", 0) > 0:
+                st.markdown(
+                    f'<div style="padding:8px 12px;margin-bottom:5px;'
+                    f'border:1px solid rgba(255,100,100,.3);border-left:3px solid #ff6464;'
+                    f'background:#0a0404;font-family:JetBrains Mono,monospace;font-size:.68rem;color:#ff9999;">'
+                    f'🔥 ZERO-DAY: {vuln_especiales.get("zero_day_count", 0)}<br>'
+                    f'<span style="font-size:.6rem;color:#ff6464;opacity:.8;">{", ".join(vuln_especiales.get("zero_day_ids", []))}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+        
+        with s2:
+            if vuln_especiales.get("supply_chain_count", 0) > 0:
+                st.markdown(
+                    f'<div style="padding:8px 12px;margin-bottom:5px;'
+                    f'border:1px solid rgba(255,204,0,.3);border-left:3px solid #ffcc00;'
+                    f'background:#0a0800;font-family:JetBrains Mono,monospace;font-size:.68rem;color:#ffdd77;">'
+                    f'⛓️ SUPPLY CHAIN: {vuln_especiales.get("supply_chain_count", 0)}<br>'
+                    f'<span style="font-size:.6rem;color:#ffcc00;opacity:.8;">{", ".join(vuln_especiales.get("supply_chain_ids", []))}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+
+# Threat Intelligence (Agent 8)
+if ag[8]:
+    st.markdown('<div style="font-family:Orbitron,monospace;font-size:.75rem;color:#ffcc00;margin-top:1.2rem;margin-bottom:.7rem;">[ THREAT INTELLIGENCE SUMMARY ]</div>', unsafe_allow_html=True)
+    
+    resumen_amenazas = ag[8].get("resumen_amenazas", {})
+    
+    t1, t2, t3, t4, t5, t6 = st.columns(6)
+    t1.metric("MALICIOUS", resumen_amenazas.get("maliciosos", 0))
+    t2.metric("SUSPICIOUS", resumen_amenazas.get("sospechosos", 0))
+    t3.metric("CLEAN", resumen_amenazas.get("limpios", 0))
+    t4.metric("CAMPAIGNS", resumen_amenazas.get("campanas_activas", 0))
+    t5.metric("ACTORS", resumen_amenazas.get("threat_actors_unicos", 0))
+    t6.metric("MITRE TTPs", resumen_amenazas.get("mitre_tactics_detected", 0))
+    
+    # Mostrar IOCs con detalles expandidos
+    iocs = ag[8].get("iocs", [])
     if iocs:
-        st.markdown("".join(ioc_row(i) for i in iocs), unsafe_allow_html=True)
-    else:
-        st.info("PENDING — awaiting agent 8 (Integrante 3)")
+        st.markdown('<div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:#7dffb0;margin-top:.8rem;">📊 IOC DETAILS:</div>', unsafe_allow_html=True)
+        for ioc in iocs:
+            rep = ioc.get("reputacion", "")
+            color = "#ff6464" if rep == "malicioso" else "#ffcc44" if rep == "sospechoso" else "#00ff6a"
+            
+            with st.expander(f"🔍 {ioc.get('ip', 'N/A')} — {rep.upper()}"):
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown(f"**Abuse Score:** {ioc.get('abuse_score', 0)}/100")
+                    st.markdown(f"**Reputación:** {rep}")
+                    st.markdown(f"**Fuente:** {ioc.get('fuente', 'N/A')}")
+                
+                with col2:
+                    campanas = ioc.get("campanas_malware", [])
+                    if campanas:
+                        st.markdown("**Campañas Malware:**")
+                        for camp in campanas:
+                            st.markdown(f"- {camp.get('nombre', 'N/A')} ({camp.get('tipo', 'N/A')})")
+                
+                # MITRE ATT&CK
+                mitre_tactics = ioc.get("mitre_attack_tactics", [])
+                if mitre_tactics:
+                    st.markdown("**MITRE ATT&CK Tactics:**")
+                    for tactic in mitre_tactics:
+                        st.markdown(f"- **{tactic.get('tactic_id', 'N/A')}:** {tactic.get('tactic_name', 'N/A')}")
+                        for tech in tactic.get('techniques', []):
+                            st.markdown(f"  - {tech}")
+
+# Risk Correlation (Agent 9)
+if ag[9]:
+    st.markdown('<div style="font-family:Orbitron,monospace;font-size:.75rem;color:#ff6464;margin-top:1.2rem;margin-bottom:.7rem;">[ RISK CORRELATION ANALYSIS ]</div>', unsafe_allow_html=True)
+    
+    desglose = ag[9].get("desglose", {})
+    factores = ag[9].get("factores_criticos", [])
+    analisis_ia = ag[9].get("analisis_ia", "")
+    
+    r1, r2, r3, r4, r5 = st.columns(5)
+    r1.metric("RED/NETWORK", desglose.get("red", 0))
+    r2.metric("WEB/OWASP", desglose.get("web_owasp", 0))
+    r3.metric("CVEs", desglose.get("cves", 0))
+    r4.metric("THREAT INTEL", desglose.get("threat_intel", 0))
+    r5.metric("TOTAL", ag[9].get("score_total", 0), ag[9].get("nivel", ""))
+    
+    # Factores críticos
+    if factores:
+        st.markdown('<div style="font-family:JetBrains Mono,monospace;font-size:.65rem;color:#ff6464;margin-top:.8rem;">⚠️ CRITICAL RISK FACTORS:</div>', unsafe_allow_html=True)
+        for factor in factores[:5]:  # Mostrar top 5
+            st.markdown(
+                f'<div style="padding:6px 10px;margin-bottom:3px;'
+                f'border-left:2px solid #ff6464;background:#0a0404;'
+                f'font-family:JetBrains Mono,monospace;font-size:.64rem;color:#ff9999;">'
+                f'→ {factor}</div>',
+                unsafe_allow_html=True
+            )
+    
+    # Análisis IA
+    if analisis_ia:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1rem;margin-bottom:.5rem;">[ AI RISK ANALYSIS ]</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="border:1px solid rgba(0,255,106,.15);background:#030e05;'
+            f'padding:12px 15px;font-family:JetBrains Mono,monospace;font-size:.70rem;'
+            f'color:#7dffb0;line-height:1.5;">'
+            f'{analisis_ia}'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+st.divider()
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  COMPLIANCE (INTEGRANTE 4)
+# ══════════════════════════════════════════════════════════════════════════════
+
+st.markdown('<div class="sec-hdr">// COMPLIANCE STATUS</div>', unsafe_allow_html=True)
+
+cmp = ag[10]
+if cmp:
+    checks = cmp.get("compliance_checks", [])
+    res10  = cmp.get("resumen", {})
+    por_framework = cmp.get("por_framework", {})
+    
+    # Métricas generales
+    if res10:
+        r1, r2, r3, r4, r5 = st.columns(5)
+        r1.metric("TOTAL CHECKS", res10.get("total_checks", "—"))
+        r2.metric("✓ PASS", res10.get("cumple", "—"))
+        r3.metric("✕ FAIL", res10.get("falla", "—"))
+        r4.metric("⚠ PARTIAL", res10.get("parcial", "—"))
+        pct = res10.get("porcentaje_cumplimiento", 0)
+        r5.metric("COMPLIANCE %", f"{pct:.1f}%")
+    
+    # Resumen por framework
+    if por_framework:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1rem;margin-bottom:.5rem;">[ COMPLIANCE BY FRAMEWORK ]</div>', unsafe_allow_html=True)
+        
+        fw_cols = st.columns(min(len(por_framework), 4))
+        for idx, (fw_name, fw_data) in enumerate(por_framework.items()):
+            if idx < len(fw_cols):
+                with fw_cols[idx]:
+                    total_fw = fw_data.get("total", 0)
+                    falla_fw = fw_data.get("falla", 0)
+                    cumple_fw = fw_data.get("cumple", 0)
+                    
+                    # Color según nivel de fallo
+                    if total_fw > 0:
+                        fail_pct = (falla_fw / total_fw) * 100
+                        if fail_pct > 60:
+                            color = "#ff6464"
+                        elif fail_pct > 30:
+                            color = "#ffcc44"
+                        else:
+                            color = "#4dcc7a"
+                    else:
+                        color = "#7dffb0"
+                    
+                    st.markdown(
+                        f'<div style="padding:8px 10px;border:1px solid {color}22;border-left:3px solid {color};background:#030a04;margin-bottom:8px;">'
+                        f'<div style="font-family:Orbitron,monospace;color:{color};font-size:.64rem;font-weight:600;margin-bottom:4px;">{fw_name}</div>'
+                        f'<div style="font-family:JetBrains Mono,monospace;font-size:.58rem;color:#7dffb0;">'
+                        f'<span style="color:#4dcc7a;">✓ {cumple_fw}</span> / '
+                        f'<span style="color:#ff6464;">✕ {falla_fw}</span> / '
+                        f'<span style="color:#ffcc44;">⚠ {fw_data.get("parcial", 0)}</span>'
+                        f'</div>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+    
+    # Tabla de checks de compliance
+    if checks:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1rem;margin-bottom:.5rem;">[ COMPLIANCE CHECKS DETAIL ]</div>', unsafe_allow_html=True)
+        
+        # Crear DataFrame con columnas específicas
+        import pandas as pd
+        checks_df = pd.DataFrame(checks)
+        if not checks_df.empty:
+            # Seleccionar columnas relevantes para mostrar
+            display_cols = ["framework", "control", "hallazgo", "estado", "severidad", "accion_correctiva"]
+            available_cols = [col for col in display_cols if col in checks_df.columns]
+            st.dataframe(checks_df[available_cols], width="stretch", hide_index=True, height=300)
+    
+    # Excepciones
+    excepciones = cmp.get("excepciones", [])
+    if excepciones:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#ffcc44;margin-top:1rem;margin-bottom:.5rem;">[ ⚠ COMPLIANCE EXCEPTIONS ]</div>', unsafe_allow_html=True)
+        for exc in excepciones:
+            st.markdown(
+                f'<div style="padding:8px 12px;margin-bottom:6px;border:1px solid rgba(255,204,0,.2);'
+                f'border-left:3px solid #ffcc00;background:#0a0800;">'
+                f'<div style="font-family:JetBrains Mono,monospace;font-size:.68rem;color:#ffcc00;margin-bottom:3px;">'
+                f'<span style="font-weight:600;">{exc.get("hallazgo_id", "N/A")}</span> - {exc.get("control", "N/A")}</div>'
+                f'<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:#d4a600;line-height:1.4;">'
+                f'Justificación: {exc.get("justificacion", "N/A")}<br>'
+                f'Aprobador: {exc.get("aprobador", "N/A")} | Expira: {exc.get("fecha_expiracion", "N/A")}<br>'
+                f'Riesgo Residual: {exc.get("riesgo_residual", "N/A").upper()}'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+    
+    # Controles compensatorios
+    controles_comp = cmp.get("controles_compensatorios", [])
+    if controles_comp:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#4dcc7a;margin-top:1rem;margin-bottom:.5rem;">[ 🛡️ COMPENSATING CONTROLS ]</div>', unsafe_allow_html=True)
+        for ctrl in controles_comp:
+            efectividad = ctrl.get("efectividad", "N/A")
+            st.markdown(
+                f'<div style="padding:8px 12px;margin-bottom:6px;border:1px solid rgba(77,204,122,.2);'
+                f'border-left:3px solid #4dcc7a;background:#030a04;">'
+                f'<div style="font-family:JetBrains Mono,monospace;font-size:.68rem;color:#4dcc7a;margin-bottom:3px;">'
+                f'Original: <span style="color:#7dffb0;">{ctrl.get("control_original", "N/A")}</span></div>'
+                f'<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:#5a8a6a;line-height:1.4;">'
+                f'Compensatorio: {ctrl.get("control_compensatorio", "N/A")}<br>'
+                f'Efectividad: <span style="color:#4dcc7a;font-weight:600;">{efectividad}</span> | '
+                f'Nivel: {ctrl.get("nivel_compensacion", "N/A")}'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+else:
+    st.info("PENDING — awaiting agent 10 (Integrante 4)")
+
+st.divider()
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  EXPLOIT INTELLIGENCE (AGENT 11)
+# ══════════════════════════════════════════════════════════════════════════════
+
+st.markdown('<div class="sec-hdr">// EXPLOIT INTELLIGENCE & PATCH PRIORITIZATION</div>', unsafe_allow_html=True)
+
+if ag[11]:
+    recomendaciones = ag[11].get("recomendaciones", [])
+    resumen11 = ag[11].get("resumen", {})
+    analisis_pri = ag[11].get("analisis_prioridades", {})
+    att_ck_sum = ag[11].get("att_ck_summary", {})
+    
+    # Métricas principales
+    if resumen11:
+        m1, m2, m3, m4, m5, m6 = st.columns(6)
+        m1.metric("TOTAL CVEs", resumen11.get("total_cves", "—"))
+        m2.metric("MSF EXPLOIT", resumen11.get("con_modulo_msf", "—"))
+        m3.metric("EXPLOITDB", resumen11.get("con_exploitdb", "—"))
+        m4.metric("GITHUB POC", resumen11.get("con_github_poc", "—"))
+        m5.metric("HIGH PROB", resumen11.get("alta_probabilidad", "—"), 
+                  delta="Critical" if resumen11.get("alta_probabilidad", 0) > 0 else None,
+                  delta_color="inverse")
+        m6.metric("NO EXPLOIT", resumen11.get("sin_exploit_publico", "—"), 
+                  delta="Safe" if resumen11.get("sin_exploit_publico", 0) > 0 else None)
+    
+    # Priorización de parcheo
+    if resumen11:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1rem;margin-bottom:.5rem;">[ 🎯 PATCH PRIORITY MATRIX ]</div>', unsafe_allow_html=True)
+        
+        pri_cols = st.columns(4)
+        priorities = [
+            ("P0", "prioridad_p0", "#ff3333", "CRITICAL"),
+            ("P1", "prioridad_p1", "#ff6464", "HIGH"),
+            ("P2", "prioridad_p2", "#ffcc44", "MEDIUM"),
+            ("P3", "prioridad_p3", "#4dcc7a", "LOW")
+        ]
+        
+        for idx, (pri_label, pri_key, pri_color, pri_text) in enumerate(priorities):
+            if idx < len(pri_cols):
+                with pri_cols[idx]:
+                    count = resumen11.get(pri_key, 0)
+                    st.markdown(
+                        f'<div style="padding:10px 12px;border:1px solid {pri_color}22;'
+                        f'border-left:3px solid {pri_color};background:#030a04;text-align:center;">'
+                        f'<div style="font-family:Orbitron,monospace;color:{pri_color};font-size:.85rem;font-weight:700;">{pri_label}</div>'
+                        f'<div style="font-family:JetBrains Mono,monospace;color:{pri_color};font-size:1.4rem;font-weight:600;">{count}</div>'
+                        f'<div style="font-family:Orbitron,monospace;color:{pri_color};font-size:.54rem;opacity:.7;">{pri_text}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+    
+    # MITRE ATT&CK Summary
+    if att_ck_sum:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1rem;margin-bottom:.5rem;">[ 🎭 MITRE ATT&CK COVERAGE ]</div>', unsafe_allow_html=True)
+        
+        att_c1, att_c2 = st.columns(2)
+        with att_c1:
+            st.markdown(
+                f'<div style="padding:8px 12px;border:1px solid rgba(0,255,106,.15);background:#030a04;">'
+                f'<div style="font-family:JetBrains Mono,monospace;font-size:.68rem;color:#7dffb0;">'
+                f'<span style="color:#4dcc7a;font-weight:600;">Tactics:</span> {att_ck_sum.get("total_tactics", 0)} | '
+                f'<span style="color:#4dcc7a;font-weight:600;">Techniques:</span> {att_ck_sum.get("total_techniques", 0)}'
+                f'</div>'
+                f'<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:#5a8a6a;margin-top:4px;">'
+                f'Most Common: {att_ck_sum.get("most_common_tactic", "N/A")}'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+        with att_c2:
+            tactics_list = att_ck_sum.get("tactics_coverage", [])
+            if tactics_list:
+                tactics_str = ", ".join([t.split(" - ")[0] for t in tactics_list[:5]])
+                st.markdown(
+                    f'<div style="padding:8px 12px;border:1px solid rgba(0,255,106,.15);background:#030a04;">'
+                    f'<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:#5a8a6a;">'
+                    f'Covered: {tactics_str}'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+    
+    # Recomendaciones detalladas
+    if recomendaciones:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1.2rem;margin-bottom:.5rem;">[ 💀 EXPLOIT INTELLIGENCE DETAILS ]</div>', unsafe_allow_html=True)
+        
+        # Ordenar por prioridad
+        recomendaciones_sorted = sorted(recomendaciones, 
+            key=lambda x: (x.get("prioridad_parcheo") or {}).get("score_total", 0), 
+            reverse=True)
+        
+        for rec in recomendaciones_sorted:
+            cve_id = rec.get("cve_id", "N/A")
+            servicio = rec.get("servicio", "")
+            puerto = rec.get("puerto", "")
+            cvss = rec.get("cvss_score", 0)
+            severidad = rec.get("severidad", "").upper()
+            
+            # Datos de priorización
+            pri_data = rec.get("prioridad_parcheo") or {}
+            pri_label = pri_data.get("prioridad", "P4")
+            pri_score = pri_data.get("score_total", 0)
+            pri_desc = pri_data.get("descripcion", "")
+            
+            # EPSS data
+            epss_data = rec.get("epss") or {}
+            epss_score = epss_data.get("epss_score", 0) * 100  # Convert to percentage
+            epss_percentile = epss_data.get("epss_percentile", 0)
+            
+            # ExploitDB
+            edb_data = rec.get("exploitdb") or {}
+            edb_id = edb_data.get("edb_id")
+            
+            # GitHub PoC
+            github_data = rec.get("github_poc") or {}
+            github_repo = github_data.get("repositorio")
+            github_stars = github_data.get("estrellas", 0)
+            
+            # ATT&CK tactics
+            att_ck_tactics = rec.get("att_ck_tactics") or []
+            
+            # Color según prioridad
+            if pri_label == "P0":
+                color = "#ff3333"
+            elif pri_label == "P1":
+                color = "#ff6464"
+            elif pri_label == "P2":
+                color = "#ffcc44"
+            else:
+                color = "#4dcc7a"
+            
+            # Card expandible
+            with st.expander(f"🎯 {pri_label} | {cve_id} | {servicio}:{puerto} | CVSS {cvss}", expanded=(pri_label in ["P0", "P1"])):
+                # Header con prioridad
+                st.markdown(
+                    f'<div style="padding:10px 14px;margin-bottom:10px;border:1px solid {color}22;'
+                    f'border-left:4px solid {color};background:#030a04;">'
+                    f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+                    f'<div>'
+                    f'<span style="font-family:Orbitron,monospace;color:{color};font-size:.9rem;font-weight:700;">{pri_label}</span>'
+                    f'<span style="font-family:JetBrains Mono,monospace;color:{color};font-size:.72rem;margin-left:12px;">Score: {pri_score:.1f}/100</span>'
+                    f'</div>'
+                    f'<div style="font-family:Orbitron,monospace;color:{color};font-size:.64rem;">{pri_desc}</div>'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+                
+                # Métricas de explotabilidad
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("EPSS Score", f"{epss_score:.2f}%", 
+                             delta=f"Percentile {epss_percentile:.1f}")
+                with col2:
+                    st.metric("CVSS", f"{cvss}/10", delta=severidad)
+                with col3:
+                    edb_status = "✓ Found" if edb_id else "✕ None"
+                    st.metric("ExploitDB", edb_status)
+                with col4:
+                    github_status = f"⭐ {github_stars}" if github_repo else "✕ None"
+                    st.metric("GitHub PoC", github_status)
+                
+                # MITRE ATT&CK Tactics
+                if att_ck_tactics:
+                    st.markdown(
+                        '<div style="font-family:Orbitron,monospace;font-size:.65rem;color:#00ff6a;margin-top:.8rem;margin-bottom:.4rem;">[ MITRE ATT&CK TACTICS ]</div>',
+                        unsafe_allow_html=True
+                    )
+                    tactics_html = ""
+                    for tactic in att_ck_tactics[:3]:  # Mostrar max 3
+                        tactic_id = tactic.get("tactic_id", "")
+                        tactic_name = tactic.get("tactic_name", "")
+                        techniques = tactic.get("techniques", [])
+                        techniques_str = ", ".join(techniques[:2])  # Max 2 techniques
+                        tactics_html += (
+                            f'<div style="padding:6px 10px;margin-bottom:4px;border:1px solid rgba(0,255,106,.15);'
+                            f'background:#030a04;font-family:JetBrains Mono,monospace;font-size:.62rem;">'
+                            f'<span style="color:#4dcc7a;font-weight:600;">{tactic_id}</span> - '
+                            f'<span style="color:#7dffb0;">{tactic_name}</span><br>'
+                            f'<span style="color:#5a8a6a;font-size:.58rem;">{techniques_str}</span>'
+                            f'</div>'
+                        )
+                    st.markdown(tactics_html, unsafe_allow_html=True)
+                
+                # Mitigaciones
+                mitigaciones = rec.get("mitigaciones", [])
+                if mitigaciones:
+                    st.markdown(
+                        '<div style="font-family:Orbitron,monospace;font-size:.65rem;color:#00ff6a;margin-top:.8rem;margin-bottom:.4rem;">[ 🛡️ MITIGATIONS ]</div>',
+                        unsafe_allow_html=True
+                    )
+                    for i, mit in enumerate(mitigaciones[:5], 1):  # Max 5
+                        st.markdown(
+                            f'<div style="padding:5px 10px;margin-bottom:3px;border-left:2px solid #4dcc7a;'
+                            f'background:#030a04;font-family:JetBrains Mono,monospace;font-size:.62rem;color:#7dffb0;">'
+                            f'<span style="color:#4dcc7a;margin-right:6px;">{i}.</span>{mit}'
+                            f'</div>',
+                            unsafe_allow_html=True
+                        )
+                
+                # Nota adicional
+                nota = rec.get("nota", "")
+                if nota:
+                    st.markdown(
+                        f'<div style="padding:8px 12px;margin-top:8px;border:1px solid {color}22;'
+                        f'background:#0a0404;font-family:JetBrains Mono,monospace;font-size:.64rem;color:{color};">'
+                        f'<span style="opacity:.7;">📌 NOTE:</span> {nota}'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+    
+    # Disclaimer
+    disclaimer = ag[11].get("disclaimer", "")
+    if disclaimer:
+        st.markdown(
+            f'<div style="border:1px solid rgba(255,100,100,.15);background:#0a0404;'
+            f'padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:.64rem;'
+            f'color:#ff9999;margin-top:1.2rem;">'
+            f'<span style="opacity:.6;font-size:.54rem;">⚠️ DISCLAIMER</span><br>'
+            f'<span style="margin-top:4px;display:block;opacity:.9;">{disclaimer}</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+else:
+    st.info("PENDING — awaiting agent 11 (Exploit Intelligence)")
+
+st.divider()
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  RISK CORRELATION (AGENT 9)
+# ══════════════════════════════════════════════════════════════════════════════
+
+st.markdown('<div class="sec-hdr">// CONSOLIDATED RISK ASSESSMENT</div>', unsafe_allow_html=True)
+
+if ag[9]:
+    risk_data = ag[9]
+    
+    # Métricas principales en una fila
+    r1, r2, r3, r4, r5, r6 = st.columns(6)
+    r1.metric("RISK SCORE", f"{risk_data.get('score_total', '—')}/100")
+    r2.metric("RISK LEVEL", risk_data.get('nivel', 'N/A'))
+    
+    desglose = risk_data.get('desglose', {})
+    r3.metric("NETWORK", f"{desglose.get('red', 0)}/25")
+    r4.metric("WEB/OWASP", f"{desglose.get('web_owasp', 0)}/30")
+    r5.metric("CVEs", f"{desglose.get('cves', 0)}/35")
+    r6.metric("THREAT", f"{desglose.get('threat_intel', 0)}/25")
+    
+    # Gráfico de desglose
+    if desglose:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1.2rem;margin-bottom:.5rem;">[ RISK BREAKDOWN ]</div>', unsafe_allow_html=True)
+        st.bar_chart(desglose)
+    
+    # Factores críticos
+    factores = risk_data.get('factores_criticos', [])
+    if factores:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1.2rem;margin-bottom:.5rem;">[ CRITICAL RISK FACTORS ]</div>', unsafe_allow_html=True)
+        for i, factor in enumerate(factores[:8], 1):  # Mostrar máximo 8
+            st.markdown(
+                f'<div style="padding:8px 12px;margin-bottom:5px;'
+                f'border:1px solid rgba(255,100,100,.2);border-left:3px solid #ff6464;'
+                f'background:#0a0404;font-family:JetBrains Mono,monospace;font-size:.68rem;color:#ff9999;">'
+                f'<span style="color:#ff6464;margin-right:8px;">#{i}</span>{factor}</div>',
+                unsafe_allow_html=True
+            )
+    
+    # Fuentes usadas y faltantes
+    fuentes_usadas = risk_data.get('fuentes_usadas', [])
+    fuentes_faltantes = risk_data.get('fuentes_faltantes', [])
+    
+    if fuentes_usadas or fuentes_faltantes:
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1.2rem;margin-bottom:.5rem;">[ DATA SOURCES ]</div>', unsafe_allow_html=True)
+        
+        col_usadas, col_faltantes = st.columns(2)
+        with col_usadas:
+            if fuentes_usadas:
+                st.markdown(
+                    '<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:#4dcc7a;">'
+                    f'✓ USED ({len(fuentes_usadas)}): {", ".join(fuentes_usadas)}'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+        with col_faltantes:
+            if fuentes_faltantes:
+                st.markdown(
+                    '<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:#ffcc44;">'
+                    f'⚠ MISSING ({len(fuentes_faltantes)}): {", ".join(fuentes_faltantes)}'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+    
+    # Recomendación inmediata
+    recomendacion = risk_data.get('recomendacion_inmediata', '')
+    if recomendacion:
+        st.markdown(
+            f'<div style="border:1px solid rgba(255,204,0,.22);border-left:3px solid #ffcc00;'
+            f'background:#0a0800;padding:11px 15px;font-family:JetBrains Mono,monospace;'
+            f'font-size:.72rem;color:#ffcc00;margin-top:1.2rem;">'
+            f'<span style="opacity:.6;font-size:.58rem;letter-spacing:.1em;">⚡ PRIORITY ACTION</span><br>'
+            f'<span style="margin-top:4px;display:block;">{recomendacion}</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+    
+    # Análisis IA (si existe)
+    analisis_ia = risk_data.get('analisis_ia', '')
+    modelo_info = risk_data.get('modelo_usado', {})
+    if analisis_ia and 'no disponible' not in analisis_ia.lower():
+        st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1.2rem;margin-bottom:.5rem;">[ AI RISK ANALYSIS ]</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="border:1px solid rgba(0,255,106,.15);background:#030e05;'
+            f'padding:12px 14px;font-family:JetBrains Mono,monospace;font-size:.68rem;'
+            f'color:#7dffb0;line-height:1.6;">{analisis_ia}</div>',
+            unsafe_allow_html=True
+        )
+        if modelo_info:
+            st.caption(f"🤖 Model: {modelo_info.get('modelo', 'N/A')} | Type: {modelo_info.get('tipo', 'N/A')}")
+            
+else:
+    st.info("PENDING — awaiting agent 9 (Risk Correlation)")
 
 st.divider()
 
@@ -776,31 +1160,151 @@ st.divider()
 # ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown('<div class="sec-hdr">// SOC ASSISTANT — AI CHAT INTERFACE</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div style="font-family:JetBrains Mono,monospace;font-size:.64rem;color:#265c36;'
-    'margin-bottom:.8rem;">'
-    '[ AG12 ] Query the assistant for threat analysis and recommendations<br>'
-    '<span style="color:#1a3320;">→ TODO (Integrante 4): reemplazar respuesta con Ollama / Claude API</span>'
-    '</div>', unsafe_allow_html=True)
+
+CHAT_HISTORY_FILE = os.path.join("shared_data", "chat_history.json")
+
+try:
+    from openai import OpenAI
+    chat_ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+    AI_CHAT_MODEL = "minimax-m3:cloud"
+    chat_available = True
+    st.markdown(
+        '<div style="font-family:JetBrains Mono,monospace;font-size:.64rem;color:#00ff6a;margin-bottom:.8rem;">'
+        '[ AG12 ] ✓ Chat AI ready — Bilingüe: English/Español | Historial persistente'
+        '</div>', unsafe_allow_html=True)
+except Exception as e:
+    chat_available = False
+    st.markdown(
+        f'<div style="font-family:JetBrains Mono,monospace;font-size:.64rem;color:#ffcc00;margin-bottom:.8rem;">'
+        f'[ AG12 ] ⚠ Chat AI offline — {str(e)[:50]}'
+        '</div>', unsafe_allow_html=True)
+
+def load_chat_history():
+    try:
+        with open(CHAT_HISTORY_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return [
+            {"role": "assistant", "content": "🛡️ **SOC Assistant online**\n\nPuedo ayudarte en **español** o **English**:\n- Analizar amenazas y vulnerabilidades\n- Explicar CVEs y su impacto\n- Revisar cumplimiento normativo\n- Recomendar acciones de seguridad\n\n💡 **Tip**: Pregunta sobre agentes específicos (ej: *\"¿Qué encontró el Agente 10?\"*)"}
+        ]
+
+def save_chat_history(messages):
+    try:
+        with open(CHAT_HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(messages, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        st.error(f"Error guardando historial: {e}")
 
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = load_chat_history()
+
+col_clear, col_download = st.columns([1, 1])
+with col_clear:
+    if st.button("🗑️ Limpiar Historial"):
+        st.session_state.messages = [st.session_state.messages[0]]
+        save_chat_history(st.session_state.messages)
+        st.rerun()
+
+with col_download:
+    chat_json = json.dumps(st.session_state.messages, indent=2, ensure_ascii=False)
+    st.download_button(
+        label="📥 Descargar Chat",
+        data=chat_json,
+        file_name=f"soc_chat_{target}.json",
+        mime="application/json"
+    )
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+        st.markdown(msg["content"])
 
-if prompt := st.chat_input("QUERY >"):
-    st.session_state.messages.append({"role":"user","content":prompt})
-    with st.chat_message("user"): st.write(prompt)
+if prompt := st.chat_input("Escribe tu pregunta en español o inglés..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-    ctx = {f"ag{i}": ag[i] for i in range(1,12) if ag[i]}
-    # ── TODO (Integrante 4): reemplazar este bloque con tu llamada a Ollama/Claude ──
-    resp = (f"[ AGENT 12 — PENDING: Integrante 4 ]\n\n"
-            f"Context available: {list(ctx.keys())}\n"
-            f"→ Replace with: ollama.chat() or anthropic.messages.create()")
-    st.session_state.messages.append({"role":"assistant","content":resp})
-    with st.chat_message("assistant"): st.write(resp)
+    context_full = f"""
+CONTEXTO COMPLETO DE ANÁLISIS DE SEGURIDAD:
+
+=== AGENTE 1: DESCUBRIMIENTO DE ACTIVOS ===
+{json.dumps(ag[1], indent=2, ensure_ascii=False) if ag[1] else "No disponible"}
+
+=== AGENTE 2: ESCANEO DE RED ===
+{json.dumps(ag[2], indent=2, ensure_ascii=False) if ag[2] else "No disponible"}
+
+=== AGENTE 3: SUPERFICIE DE ATAQUE ===
+{json.dumps(ag[3], indent=2, ensure_ascii=False) if ag[3] else "No disponible"}
+
+=== AGENTE 4: NIKTO WEB SCAN ===
+{json.dumps(ag[4], indent=2, ensure_ascii=False) if ag[4] else "No disponible"}
+
+=== AGENTE 5: NUCLEI TEMPLATES ===
+{json.dumps(ag[5], indent=2, ensure_ascii=False) if ag[5] else "No disponible"}
+
+=== AGENTE 6: ANÁLISIS OWASP ===
+{json.dumps(ag[6], indent=2, ensure_ascii=False) if ag[6] else "No disponible"}
+
+=== AGENTE 7: INTELIGENCIA DE CVEs ===
+{json.dumps(ag[7], indent=2, ensure_ascii=False) if ag[7] else "No disponible"}
+
+=== AGENTE 8: THREAT INTELLIGENCE ===
+{json.dumps(ag[8], indent=2, ensure_ascii=False) if ag[8] else "No disponible"}
+
+=== AGENTE 9: CORRELACIÓN DE RIESGO ===
+{json.dumps(ag[9], indent=2, ensure_ascii=False) if ag[9] else "No disponible"}
+
+=== AGENTE 10: CUMPLIMIENTO NORMATIVO ===
+{json.dumps(ag[10], indent=2, ensure_ascii=False) if ag[10] else "No disponible"}
+
+=== AGENTE 11: ASESOR METASPLOIT ===
+{json.dumps(ag[11], indent=2, ensure_ascii=False) if ag[11] else "No disponible"}
+
+RESUMEN:
+- Objetivo: {target}
+- Agentes activos: {agentes_ok}/11
+- Puntuación de riesgo: {score}/100 ({nivel})
+- Puertos abiertos: {len(ag[2].get('services', [])) if ag[2] else 0}
+- Activos críticos: {len(activos_list)}
+- Hallazgos web: {len((ag[4] or {}).get('hallazgos', [])) + len((ag[5] or {}).get('hallazgos', []))}
+- CVEs encontrados: {len((ag[7] or {}).get('cves_encontrados', []))}
+"""
+
+    with st.chat_message("assistant"):
+        if not chat_available:
+            response_text = "⚠️ **Chat IA desconectado**\n\nAsegúrate de que Ollama esté corriendo:\n```bash\nollama serve\nollama pull minimax-m3:cloud\n```"
+            st.markdown(response_text)
+        else:
+            with st.spinner("Analizando..." if any(c in prompt.lower() for c in "áéíóúñ¿¡") else "Analyzing..."):
+                try:
+                    response = chat_ai.chat.completions.create(
+                        model=AI_CHAT_MODEL,
+                        messages=[
+                            {"role": "system", "content": f"""Eres un asistente SOC (Centro de Operaciones de Seguridad) bilingüe.
+
+INSTRUCCIONES CRÍTICAS:
+1. DETECTA EL IDIOMA de la pregunta del usuario y responde en el MISMO IDIOMA
+2. SIEMPRE cita la fuente del agente al referenciar datos:
+   - Español: "Según el Agente 3...", "El Agente 7 detectó...", "Como muestra el Agente 10..."
+   - English: "According to Agent 3...", "Agent 7 detected...", "As shown by Agent 10..."
+3. Sé técnico, preciso y accionable
+4. Prioriza hallazgos críticos sobre problemas menores
+5. Referencia CVEs específicos, puertos, servicios o controles de cumplimiento
+
+{context_full}
+
+Al responder, SIEMPRE indica qué agente proporcionó cada información."""},
+                            *st.session_state.messages
+                        ],
+                        temperature=0.3,
+                    )
+                    response_text = response.choices[0].message.content
+                    st.markdown(response_text)
+                except Exception as e:
+                    response_text = f"❌ **Error de comunicación con IA**: {str(e)}\n\nVerifica que Ollama esté corriendo y el modelo instalado."
+                    st.markdown(response_text)
+
+    st.session_state.messages.append({"role": "assistant", "content": response_text})
+    save_chat_history(st.session_state.messages)
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  FOOTER

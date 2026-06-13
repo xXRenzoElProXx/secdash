@@ -1,0 +1,68 @@
+{
+  "agente": "Agente 04 - Web Vulnerability",
+  "target": "google.com",
+  "url_escaneada": "http://142.251.0.139",
+  "herramienta": "nikto",
+  "modo": "mock",
+  "hallazgos": [
+    {
+      "id": "NIKTO-001",
+      "descripcion": "X-Frame-Options header is not present",
+      "severidad": "LOW",
+      "url_afectada": "http://142.251.0.139",
+      "evidencia": "Cabecera X-Frame-Options ausente"
+    },
+    {
+      "id": "NIKTO-002",
+      "descripcion": "Directory indexing found",
+      "severidad": "MEDIUM",
+      "url_afectada": "http://142.251.0.139/uploads/",
+      "evidencia": "Listado de directorio expuesto"
+    },
+    {
+      "id": "NIKTO-003",
+      "descripcion": "SSLv3 enabled - vulnerable to POODLE attack",
+      "severidad": "HIGH",
+      "url_afectada": "https://142.251.0.139",
+      "evidencia": "Protocolo SSLv3 obsoleto detectado"
+    },
+    {
+      "id": "NIKTO-004",
+      "descripcion": "Weak cipher suite RC4 detected",
+      "severidad": "MEDIUM",
+      "url_afectada": "https://142.251.0.139",
+      "evidencia": "Cifrado RC4 débil en uso"
+    },
+    {
+      "id": "NIKTO-005",
+      "descripcion": "Self-signed SSL certificate detected",
+      "severidad": "MEDIUM",
+      "url_afectada": "https://142.251.0.139",
+      "evidencia": "Certificado autofirmado - cadena de confianza no verificable"
+    },
+    {
+      "id": "NIKTO-006",
+      "descripcion": "Telnet service exposed on port 23",
+      "severidad": "HIGH",
+      "url_afectada": "http://142.251.0.139:23",
+      "evidencia": "Servicio Telnet sin cifrado expuesto"
+    },
+    {
+      "id": "NIKTO-007",
+      "descripcion": "FTP anonymous login allowed",
+      "severidad": "HIGH",
+      "url_afectada": "ftp://142.251.0.139",
+      "evidencia": "Login anónimo FTP habilitado"
+    },
+    {
+      "id": "NIKTO-008",
+      "descripcion": "Default admin credentials found",
+      "severidad": "CRITICAL",
+      "url_afectada": "http://142.251.0.139/admin",
+      "evidencia": "Credenciales por defecto admin:admin funcionan"
+    }
+  ],
+  "total_hallazgos": 8,
+  "nota": "Severidad estimada por heurística porque Nikto no siempre entrega severidad normalizada.",
+  "timestamp": "2026-06-12T04:30:15.123456+00:00"
+}

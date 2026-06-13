@@ -7,17 +7,37 @@
       "protocol": "tcp",
       "state": "open",
       "service": "http",
-      "version": "gws"
+      "version": "gws",
+      "banner": "gws"
     },
     {
       "port": 443,
       "protocol": "tcp",
       "state": "open",
       "service": "ssl/https",
-      "version": "gws"
+      "version": "gws",
+      "banner": "gws"
     }
   ],
-  "os_detected": "No detectado (probablemente Linux, servidor Google)",
-  "resumen": "Servidor de Google (cj-in-f139.1e100.net) con puertos 80 (HTTP) y 443 (HTTPS) abiertos, ambos ejecutando gws (Google Web Server). 998 puertos TCP filtrados. No se detectó el sistema operativo. Las respuestas HTTP indican que es un servidor web de Google (gws) con cabeceras típicas como Content-Security-Policy, P3P, Set-Cookie de Google y X-Frame-Options SAMEORIGIN.",
-  "timestamp": "2026-06-08T03:13:59.449849+00:00"
+  "os_detected": "Linux 4.x (probablemente servidor Google)",
+  "firewall_ids_detection": {
+    "firewall_present": true,
+    "ids_ips_detected": false,
+    "filtered_ports": 998,
+    "evidence": "998 puertos TCP filtrados detectados, sugiere presencia de firewall restrictivo"
+  },
+  "ssl_tls_services": [
+    {
+      "port": 443,
+      "protocol": "TLSv1.3",
+      "cipher": "AES128-GCM-SHA256",
+      "certificate_valid": true
+    }
+  ],
+  "security_issues": [
+    "Puerto 80 (HTTP) expuesto sin redirección forzada a HTTPS",
+    "No se detectaron issues críticos - configuración robusta"
+  ],
+  "resumen": "Servidor de Google (cj-in-f139.1e100.net) con puertos 80 (HTTP) y 443 (HTTPS) abiertos, ambos ejecutando gws (Google Web Server). 998 puertos TCP filtrados indicando presencia de firewall. TLS 1.3 con cifrado fuerte (AES128-GCM-SHA256). Certificado válido. Configuración de seguridad robusta con CSP, X-Frame-Options SAMEORIGIN y headers de seguridad apropiados.",
+  "timestamp": "2026-06-12T03:13:59.449849+00:00"
 }

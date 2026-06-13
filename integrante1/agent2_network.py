@@ -34,13 +34,14 @@ else:
 
 def run_nmap(ip):
     """
-    Corre nmap con detección de versiones y OS.
-    Devuelve el output en texto plano.
+    Corre nmap con detección de versiones, OS y scripts NSE de seguridad.
+    Incluye detección de firewall/IDS.
     """
     print(f"   Ejecutando nmap sobre {ip}...")
     print("   (puede tardar 1-2 minutos)")
 
-    cmd = f"nmap -sV --open -T4 {ip}"
+    # Escaneo completo: versiones + OS + scripts de seguridad + detección firewall
+    cmd = f"nmap -sV -O --script=banner,ssl-cert,ssh-auth-methods,firewall-bypass --open -T4 {ip}"
     try:
         result = subprocess.run(
             cmd, shell=True, capture_output=True, text=True, timeout=180
@@ -69,6 +70,7 @@ def run_nmap_os(ip):
 def parsear_nmap_con_ia(ip, nmap_output):
     """
     Le pasa el output de nmap a la IA para que lo convierta a JSON estructurado.
+    Incluye análisis de firewall, IDS y configuración de seguridad.
     """
     prompt = f"""Analiza este output de nmap y devuelve SOLO un JSON válido con esta estructura exacta:
 {{
@@ -79,10 +81,29 @@ def parsear_nmap_con_ia(ip, nmap_output):
       "protocol": "tcp",
       "state": "open",
       "service": "http",
-      "version": "nginx 1.18.0"
+      "version": "nginx 1.18.0",
+      "banner": "nginx/1.18.0"
     }}
   ],
   "os_detected": "Linux 4.x / Windows Server 2019 / etc",
+  "firewall_ids_detection": {{
+    "firewall_present": true,
+    "ids_ips_detected": false,
+    "filtered_ports": 5,
+    "evidence": "varios puertos filtrados detectados"
+  }},
+  "ssl_tls_services": [
+    {{
+      "port": 443,
+      "protocol": "TLSv1.2",
+      "cipher": "AES256-GCM-SHA384",
+      "certificate_valid": true
+    }}
+  ],
+  "security_issues": [
+    "SSH con autenticación por contraseña habilitada",
+    "Servicio Telnet expuesto (puerto 23)"
+  ],
   "resumen": "descripción breve de lo encontrado"
 }}
 
@@ -167,6 +188,14 @@ def run_agent():
         "ip": ip,
         "services": parsed.get("puertos_abiertos", []),
         "os_detected": parsed.get("os_detected", "desconocido"),
+        "firewall_ids_detection": parsed.get("firewall_ids_detection", {
+            "firewall_present": False,
+            "ids_ips_detected": False,
+            "filtered_ports": 0,
+            "evidence": "No detectado"
+        }),
+        "ssl_tls_services": parsed.get("ssl_tls_services", []),
+        "security_issues": parsed.get("security_issues", []),
         "resumen": parsed.get("resumen", ""),
         "timestamp": datetime.now(UTC).isoformat()    
      }
@@ -183,6 +212,24 @@ def run_agent():
     print(f"      IP: {ip}")
     print(f"      OS: {resultado['os_detected']}")
     print(f"      Puertos abiertos: {len(resultado['services'])}")
+    
+    # Mostrar firewall/IDS detection
+    fw_data = resultado.get('firewall_ids_detection', {})
+    if fw_data.get('firewall_present'):
+        print(f"      🔥 Firewall detectado: {fw_data.get('evidence', 'Sí')}")
+    if fw_data.get('ids_ips_detected'):
+        print(f"      🚨 IDS/IPS detectado")
+    
+    # Mostrar servicios SSL/TLS
+    ssl_services = resultado.get('ssl_tls_services', [])
+    if ssl_services:
+        print(f"      🔐 Servicios SSL/TLS: {len(ssl_services)}")
+    
+    # Mostrar issues de seguridad
+    issues = resultado.get('security_issues', [])
+    if issues:
+        print(f"      ⚠️ Issues de seguridad: {len(issues)}")
+    
     for s in resultado["services"][:5]:
         print(f"        → {s['port']}/{s['protocol']} {s['service']} {s.get('version','')}")
     if len(resultado["services"]) > 5:

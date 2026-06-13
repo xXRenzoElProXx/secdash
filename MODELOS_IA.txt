@@ -1,0 +1,178 @@
+═══════════════════════════════════════════════════════════════════════════════
+MODELOS DE IA POR INTEGRANTE - SECDASH AI SOC
+═══════════════════════════════════════════════════════════════════════════════
+
+Cada integrante usa un modelo diferente según las necesidades de sus agentes.
+
+───────────────────────────────────────────────────────────────────────────────
+INSTALACIÓN DE MODELOS
+───────────────────────────────────────────────────────────────────────────────
+
+# 1. Iniciar servidor Ollama (en una terminal aparte)
+ollama serve
+
+# 2. Descargar todos los modelos (en otra terminal)
+ollama pull minimax-m3:cloud          # ~20GB - Más potente
+ollama pull llama3.2:3b               # ~2GB  - Balanceado
+ollama pull qwen2.5-coder:1.5b        # ~900MB - Rápido
+ollama pull phi3:mini                 # ~2.3GB - Eficiente
+
+# 3. Verificar modelos instalados
+ollama list
+
+# Salida esperada:
+# NAME                    SIZE
+# minimax-m3:cloud        20 GB
+# llama3.2:3b             2.0 GB
+# qwen2.5-coder:1.5b      934 MB
+# phi3:mini               2.3 GB
+
+───────────────────────────────────────────────────────────────────────────────
+ASIGNACIÓN DE MODELOS
+───────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────┬───────────────────────┬──────────┬─────────────────────┐
+│ INTEGRANTE      │ AGENTES               │ MODELO   │ CARACTERÍSTICAS     │
+├─────────────────┼───────────────────────┼──────────┼─────────────────────┤
+│ INTEGRANTE 1    │ AG1: Discovery        │ minimax  │ - Más potente       │
+│                 │ AG2: Network          │ -m3      │ - Mejor comprensión │
+│                 │ AG3: Attack Surface   │ :cloud   │ - Análisis complejo │
+│                 │                       │ (~20GB)  │ - Reconocimiento    │
+├─────────────────┼───────────────────────┼──────────┼─────────────────────┤
+│ INTEGRANTE 2    │ AG4: Nikto (sin IA)   │ phi3     │ - Ligero y rápido   │
+│                 │ AG5: Nuclei (sin IA)  │ :mini    │ - Eficiente         │
+│                 │ AG6: OWASP Classifier │ (~2.3GB) │ - Clasificación     │
+├─────────────────┼───────────────────────┼──────────┼─────────────────────┤
+│ INTEGRANTE 3    │ AG7: CVE (sin IA)     │ llama3.2 │ - Balanceado        │
+│                 │ AG8: Threat (sin IA)  │ :3b      │ - Buena calidad     │
+│                 │ AG9: Risk Correlation │ (~2GB)   │ - Correlación       │
+├─────────────────┼───────────────────────┼──────────┼─────────────────────┤
+│ INTEGRANTE 4    │ AG10: Compliance      │ qwen2.5  │ - Muy rápido        │
+│                 │ AG11: Metasploit      │ -coder   │ - Especializado     │
+│                 │                       │ :1.5b    │ - Código/análisis   │
+│                 │                       │ (~900MB) │ - Más ligero        │
+├─────────────────┼───────────────────────┼──────────┼─────────────────────┤
+│ DASHBOARD       │ AG12: SOC Chat        │ minimax  │ - Conversacional    │
+│                 │                       │ -m3      │ - Bilingüe ES/EN    │
+│                 │                       │ :cloud   │ - Contexto amplio   │
+└─────────────────┴───────────────────────┴──────────┴─────────────────────┘
+
+───────────────────────────────────────────────────────────────────────────────
+TAMAÑOS Y REQUISITOS
+───────────────────────────────────────────────────────────────────────────────
+
+MODELO              TAMAÑO    RAM REQUERIDA    VELOCIDAD    CALIDAD
+─────────────────────────────────────────────────────────────────────
+minimax-m3:cloud    ~20 GB    16+ GB           ⚡⚡         ⭐⭐⭐⭐⭐
+llama3.2:3b         ~2 GB     4-8 GB           ⚡⚡⚡        ⭐⭐⭐⭐
+phi3:mini           ~2.3 GB   4-8 GB           ⚡⚡⚡⚡      ⭐⭐⭐
+qwen2.5-coder:1.5b  ~900 MB   2-4 GB           ⚡⚡⚡⚡⚡    ⭐⭐⭐
+
+TOTAL: ~25 GB de disco
+
+───────────────────────────────────────────────────────────────────────────────
+JUSTIFICACIÓN POR INTEGRANTE
+───────────────────────────────────────────────────────────────────────────────
+
+INTEGRANTE 1 (minimax-m3:cloud)
+  ✓ Reconocimiento inicial requiere comprensión profunda
+  ✓ Análisis de WHOIS, DNS, superficie de ataque
+  ✓ Genera descripciones técnicas detalladas
+  ✓ Modelo más potente para tareas complejas
+
+INTEGRANTE 2 (phi3:mini)
+  ✓ Clasificación OWASP no requiere modelo grande
+  ✓ Tarea específica: mapear hallazgos a categorías
+  ✓ Modelo eficiente para clasificación
+  ✓ Responde rápido con buena precisión
+
+INTEGRANTE 3 (llama3.2:3b)
+  ✓ Correlación de riesgo requiere balance
+  ✓ Analiza múltiples fuentes (AG2-8)
+  ✓ Genera score 0-100 y análisis consolidado
+  ✓ Modelo mediano con buena calidad/velocidad
+
+INTEGRANTE 4 (qwen2.5-coder:1.5b)
+  ✓ Análisis de compliance y exploits
+  ✓ Modelo especializado en código y análisis técnico
+  ✓ Muy rápido para tareas repetitivas
+  ✓ Ligero pero efectivo para su propósito
+
+DASHBOARD (minimax-m3:cloud)
+  ✓ Chat conversacional bilingüe
+  ✓ Debe entender contexto completo (11 agentes)
+  ✓ Respuestas coherentes y detalladas
+  ✓ Mejor modelo para interacción con usuarios
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICACIÓN
+───────────────────────────────────────────────────────────────────────────────
+
+# Ver modelos descargados
+ollama list
+
+# Probar un modelo
+ollama run minimax-m3:cloud
+>>> Hola, ¿cómo funciona un análisis de seguridad?
+>>> /bye
+
+# Ver uso de recursos
+# Windows: Administrador de Tareas > Rendimiento
+# Linux: htop
+
+───────────────────────────────────────────────────────────────────────────────
+TROUBLESHOOTING
+───────────────────────────────────────────────────────────────────────────────
+
+Error: "model 'minimax-m3:cloud' not found"
+  Solución: ollama pull minimax-m3:cloud
+
+Error: "connection refused"
+  Solución: ollama serve (en otra terminal)
+
+Error: "out of memory"
+  Solución: 
+  - Cerrar otros programas
+  - Usar modelos más pequeños
+  - Aumentar RAM del sistema
+
+Modelo muy lento:
+  - Verificar que Ollama use GPU si está disponible
+  - Considerar modelos más pequeños
+  - Ejecutar agentes de uno en uno, no todos juntos
+
+───────────────────────────────────────────────────────────────────────────────
+CONFIGURACIÓN ALTERNATIVA (Si no tienes suficiente RAM)
+───────────────────────────────────────────────────────────────────────────────
+
+Opción 1: Solo modelos pequeños (recomendado para <16GB RAM)
+  ollama pull llama3.2:3b
+  ollama pull qwen2.5-coder:1.5b
+  ollama pull phi3:mini
+  
+  Editar agentes:
+  - Integrante 1: cambiar a llama3.2:3b
+  - Integrante 2: mantener phi3:mini
+  - Integrante 3: mantener llama3.2:3b
+  - Integrante 4: mantener qwen2.5-coder:1.5b
+  - Dashboard: cambiar a llama3.2:3b
+
+Opción 2: Un solo modelo para todos (mínimo)
+  ollama pull llama3.2:3b
+  
+  Cambiar todos los agentes a usar: llama3.2:3b
+
+───────────────────────────────────────────────────────────────────────────────
+ARCHIVOS MODIFICADOS
+───────────────────────────────────────────────────────────────────────────────
+
+✓ integrante1/agent1_discovery.py       → minimax-m3:cloud (sin cambios)
+✓ integrante1/agent2_network.py         → minimax-m3:cloud (sin cambios)
+✓ integrante1/agent3_surface.py         → minimax-m3:cloud (sin cambios)
+✓ integrante2/agent6_owasp_classifier.py → phi3:mini (ACTUALIZADO)
+✓ integrante3/agent9_risk_correlation.py → llama3.2:3b (ACTUALIZADO)
+✓ integrante4/agent10_compliance.py     → qwen2.5-coder:1.5b (ACTUALIZADO)
+✓ integrante4/agent11_metasploit.py     → qwen2.5-coder:1.5b (ACTUALIZADO)
+✓ dashboard.py                           → minimax-m3:cloud (sin cambios)
+
+═══════════════════════════════════════════════════════════════════════════════

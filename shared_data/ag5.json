@@ -1,0 +1,132 @@
+{
+  "agente": "Agente 05 - Template Scanner",
+  "target": "google.com",
+  "url_escaneada": "http://142.251.0.139",
+  "herramienta": "nuclei",
+  "modo": "mock",
+  "hallazgos": [
+    {
+      "id": "NUCLEI-001",
+      "template": "http-missing-security-headers",
+      "cve_id": null,
+      "severidad": "INFO",
+      "descripcion": "Google servers missing some security headers",
+      "url_afectada": "http://142.251.0.139",
+      "evidencia": {
+        "matcher": "word",
+        "type": "http",
+        "extracted_results": [
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      }
+    },
+    {
+      "id": "NUCLEI-002",
+      "template": "google-analytics-tracking-id",
+      "cve_id": null,
+      "severidad": "INFO",
+      "descripcion": "Google Analytics tracking ID detected",
+      "url_afectada": "http://142.251.0.139",
+      "evidencia": {
+        "matcher": "regex",
+        "type": "http",
+        "extracted_results": [
+          "UA-XXXXXXX-X"
+        ]
+      }
+    },
+    {
+      "id": "NUCLEI-003",
+      "template": "sql-injection-basic",
+      "cve_id": null,
+      "severidad": "CRITICAL",
+      "descripcion": "SQL Injection vulnerability in search parameter",
+      "url_afectada": "http://142.251.0.139/search?q=test",
+      "evidencia": {
+        "matcher": "word",
+        "type": "http",
+        "extracted_results": [
+          "SQL syntax error"
+        ]
+      }
+    },
+    {
+      "id": "NUCLEI-004",
+      "template": "xss-reflected",
+      "cve_id": null,
+      "severidad": "HIGH",
+      "descripcion": "Cross-Site Scripting (XSS) vulnerability detected",
+      "url_afectada": "http://142.251.0.139/comment",
+      "evidencia": {
+        "matcher": "regex",
+        "type": "http",
+        "extracted_results": [
+          "<script>alert(1)</script>"
+        ]
+      }
+    },
+    {
+      "id": "NUCLEI-005",
+      "template": "buffer-overflow-detection",
+      "cve_id": null,
+      "severidad": "CRITICAL",
+      "descripcion": "Potential buffer overflow in input field",
+      "url_afectada": "http://142.251.0.139/login",
+      "evidencia": {
+        "matcher": "status",
+        "type": "http",
+        "extracted_results": [
+          "500 Internal Server Error"
+        ]
+      }
+    },
+    {
+      "id": "NUCLEI-006",
+      "template": "weak-hash-md5",
+      "cve_id": null,
+      "severidad": "MEDIUM",
+      "descripcion": "MD5 hash algorithm in use - cryptographically broken",
+      "url_afectada": "http://142.251.0.139/api/hash",
+      "evidencia": {
+        "matcher": "regex",
+        "type": "http",
+        "extracted_results": [
+          "md5"
+        ]
+      }
+    },
+    {
+      "id": "NUCLEI-007",
+      "template": "path-traversal",
+      "cve_id": null,
+      "severidad": "HIGH",
+      "descripcion": "Path traversal vulnerability - directory traversal attack possible",
+      "url_afectada": "http://142.251.0.139/download?file=../../../etc/passwd",
+      "evidencia": {
+        "matcher": "word",
+        "type": "http",
+        "extracted_results": [
+          "root:x:0:0"
+        ]
+      }
+    },
+    {
+      "id": "NUCLEI-008",
+      "template": "session-fixation",
+      "cve_id": null,
+      "severidad": "HIGH",
+      "descripcion": "Session fixation vulnerability in authentication",
+      "url_afectada": "http://142.251.0.139/login",
+      "evidencia": {
+        "matcher": "cookie",
+        "type": "http",
+        "extracted_results": [
+          "PHPSESSID not regenerated"
+        ]
+      }
+    }
+  ],
+  "total_hallazgos": 8,
+  "timestamp": "2026-06-12T04:30:20.654321+00:00"
+}

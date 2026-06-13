@@ -1,0 +1,202 @@
+{
+  "agente": "Agente 06 - OWASP Classifier",
+  "target": "google.com",
+  "framework": "OWASP Top 10 2021",
+  "clasificaciones": [
+    {
+      "hallazgo_id": "NIKTO-001",
+      "fuente": "ag4",
+      "categoria_owasp": "A05",
+      "nombre_categoria": "Security Misconfiguration",
+      "mitigacion": "Corregir configuraciones inseguras, deshabilitar funciones innecesarias (Telnet, FTP anónimo), aplicar hardening del servidor, configurar firewalls/ACLs restrictivos, eliminar servicios no críticos.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Security Misconfiguration.",
+      "url_afectada": "http://142.251.0.139",
+      "severidad": "LOW",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NIKTO-002",
+      "fuente": "ag4",
+      "categoria_owasp": "A05",
+      "nombre_categoria": "Security Misconfiguration",
+      "mitigacion": "Corregir configuraciones inseguras, deshabilitar funciones innecesarias (Telnet, FTP anónimo), aplicar hardening del servidor, configurar firewalls/ACLs restrictivos, eliminar servicios no críticos.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Security Misconfiguration.",
+      "url_afectada": "http://142.251.0.139/uploads/",
+      "severidad": "MEDIUM",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NIKTO-003",
+      "fuente": "ag4",
+      "categoria_owasp": "A02",
+      "nombre_categoria": "Cryptographic Failures",
+      "mitigacion": "Usar TLS 1.2+, cifrado fuerte (AES-256, RSA-2048+), evitar algoritmos obsoletos (DES, MD5, SHA-1), gestión adecuada de claves, certificados X.509 válidos y protección de datos sensibles.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Cryptographic Failures.",
+      "url_afectada": "https://142.251.0.139",
+      "severidad": "HIGH",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NIKTO-004",
+      "fuente": "ag4",
+      "categoria_owasp": "A02",
+      "nombre_categoria": "Cryptographic Failures",
+      "mitigacion": "Usar TLS 1.2+, cifrado fuerte (AES-256, RSA-2048+), evitar algoritmos obsoletos (DES, MD5, SHA-1), gestión adecuada de claves, certificados X.509 válidos y protección de datos sensibles.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Cryptographic Failures.",
+      "url_afectada": "https://142.251.0.139",
+      "severidad": "MEDIUM",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NIKTO-005",
+      "fuente": "ag4",
+      "categoria_owasp": "A02",
+      "nombre_categoria": "Cryptographic Failures",
+      "mitigacion": "Usar TLS 1.2+, cifrado fuerte (AES-256, RSA-2048+), evitar algoritmos obsoletos (DES, MD5, SHA-1), gestión adecuada de claves, certificados X.509 válidos y protección de datos sensibles.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Cryptographic Failures.",
+      "url_afectada": "https://142.251.0.139",
+      "severidad": "MEDIUM",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NIKTO-006",
+      "fuente": "ag4",
+      "categoria_owasp": "A05",
+      "nombre_categoria": "Security Misconfiguration",
+      "mitigacion": "Corregir configuraciones inseguras, deshabilitar funciones innecesarias (Telnet, FTP anónimo), aplicar hardening del servidor, configurar firewalls/ACLs restrictivos, eliminar servicios no críticos.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Security Misconfiguration.",
+      "url_afectada": "http://142.251.0.139:23",
+      "severidad": "HIGH",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NIKTO-007",
+      "fuente": "ag4",
+      "categoria_owasp": "A05",
+      "nombre_categoria": "Security Misconfiguration",
+      "mitigacion": "Corregir configuraciones inseguras, deshabilitar funciones innecesarias (Telnet, FTP anónimo), aplicar hardening del servidor, configurar firewalls/ACLs restrictivos, eliminar servicios no críticos.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Security Misconfiguration.",
+      "url_afectada": "ftp://142.251.0.139",
+      "severidad": "HIGH",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NIKTO-008",
+      "fuente": "ag4",
+      "categoria_owasp": "A07",
+      "nombre_categoria": "Identification and Authentication Failures",
+      "mitigacion": "Fortalecer autenticación, sesiones seguras, políticas de contraseñas robustas, MFA, protección contra fuerza bruta y tokens CSRF.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Identification and Authentication Failures.",
+      "url_afectada": "http://142.251.0.139/admin",
+      "severidad": "CRITICAL",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NUCLEI-001",
+      "fuente": "ag5",
+      "categoria_owasp": "A05",
+      "nombre_categoria": "Security Misconfiguration",
+      "mitigacion": "Corregir configuraciones inseguras, deshabilitar funciones innecesarias (Telnet, FTP anónimo), aplicar hardening del servidor, configurar firewalls/ACLs restrictivos, eliminar servicios no críticos.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Security Misconfiguration.",
+      "url_afectada": "http://142.251.0.139",
+      "severidad": "INFO",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NUCLEI-002",
+      "fuente": "ag5",
+      "categoria_owasp": "A05",
+      "nombre_categoria": "Security Misconfiguration",
+      "mitigacion": "Corregir configuraciones inseguras, deshabilitar funciones innecesarias (Telnet, FTP anónimo), aplicar hardening del servidor, configurar firewalls/ACLs restrictivos, eliminar servicios no críticos.",
+      "razon": "Clasificación por defecto: el hallazgo parece una configuración o exposición web general.",
+      "url_afectada": "http://142.251.0.139",
+      "severidad": "INFO",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NUCLEI-003",
+      "fuente": "ag5",
+      "categoria_owasp": "A03",
+      "nombre_categoria": "Injection",
+      "mitigacion": "Validar y sanitizar todas las entradas, usar consultas parametrizadas, codificación de salida, evitar concatenación de datos del usuario, proteger contra buffer overflow con DEP/ASLR.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Injection.",
+      "url_afectada": "http://142.251.0.139/search?q=test",
+      "severidad": "CRITICAL",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NUCLEI-004",
+      "fuente": "ag5",
+      "categoria_owasp": "A03",
+      "nombre_categoria": "Injection",
+      "mitigacion": "Validar y sanitizar todas las entradas, usar consultas parametrizadas, codificación de salida, evitar concatenación de datos del usuario, proteger contra buffer overflow con DEP/ASLR.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Injection.",
+      "url_afectada": "http://142.251.0.139/comment",
+      "severidad": "HIGH",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NUCLEI-005",
+      "fuente": "ag5",
+      "categoria_owasp": "A03",
+      "nombre_categoria": "Injection",
+      "mitigacion": "Validar y sanitizar todas las entradas, usar consultas parametrizadas, codificación de salida, evitar concatenación de datos del usuario, proteger contra buffer overflow con DEP/ASLR.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Injection.",
+      "url_afectada": "http://142.251.0.139/login",
+      "severidad": "CRITICAL",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NUCLEI-006",
+      "fuente": "ag5",
+      "categoria_owasp": "A02",
+      "nombre_categoria": "Cryptographic Failures",
+      "mitigacion": "Usar TLS 1.2+, cifrado fuerte (AES-256, RSA-2048+), evitar algoritmos obsoletos (DES, MD5, SHA-1), gestión adecuada de claves, certificados X.509 válidos y protección de datos sensibles.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Cryptographic Failures.",
+      "url_afectada": "http://142.251.0.139/api/hash",
+      "severidad": "MEDIUM",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NUCLEI-007",
+      "fuente": "ag5",
+      "categoria_owasp": "A01",
+      "nombre_categoria": "Broken Access Control",
+      "mitigacion": "Aplicar controles de autorización por rol (RBAC), validar permisos en servidor, implementar principio de mínimo privilegio y evitar acceso directo a recursos no autorizados.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Broken Access Control.",
+      "url_afectada": "http://142.251.0.139/download?file=../../../etc/passwd",
+      "severidad": "HIGH",
+      "clasificador": "reglas_locales"
+    },
+    {
+      "hallazgo_id": "NUCLEI-008",
+      "fuente": "ag5",
+      "categoria_owasp": "A07",
+      "nombre_categoria": "Identification and Authentication Failures",
+      "mitigacion": "Fortalecer autenticación, sesiones seguras, políticas de contraseñas robustas, MFA, protección contra fuerza bruta y tokens CSRF.",
+      "razon": "Clasificado por coincidencia de palabras clave asociadas a Identification and Authentication Failures.",
+      "url_afectada": "http://142.251.0.139/login",
+      "severidad": "HIGH",
+      "clasificador": "reglas_locales"
+    }
+  ],
+  "heatmap_owasp": {
+    "A01": 1,
+    "A02": 4,
+    "A03": 3,
+    "A04": 0,
+    "A05": 5,
+    "A06": 0,
+    "A07": 2,
+    "A08": 0,
+    "A09": 0,
+    "A10": 0
+  },
+  "total_clasificados": 16,
+  "fuentes": [
+    "shared_data/ag4.json",
+    "shared_data/ag5.json"
+  ],
+  "nota": "El Agente 6 solo clasifica hallazgos; no ejecuta escaneos ni calcula score de riesgo. Las clasificaciones incluyen conceptos del curso: criptografía (SSL/TLS, cifrados), control de acceso (RBAC), hardening, buffer overflow, validación de entrada.",
+  "timestamp": "2026-06-12T04:31:00.789012+00:00"
+}

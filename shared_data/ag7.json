@@ -1,0 +1,135 @@
+{
+  "agent": "AG7_CVE_INTELLIGENCE",
+  "integrante": 3,
+  "target": "google.com",
+  "ip": "142.251.0.139",
+  "modo": "mock_demo",
+  "cves_encontrados": [
+    {
+      "software": "http",
+      "version": "gws",
+      "port": 80,
+      "protocol": "tcp",
+      "cve_id": "CVE-2024-GWS-001",
+      "cvss_score": 5.3,
+      "severidad": "MEDIUM",
+      "cvss_detail": {
+        "base_score": 5.3,
+        "base_severity": "MEDIUM",
+        "exploitability": 3.9,
+        "impact": 1.4,
+        "vector_string": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N"
+      },
+      "descripcion": "EJEMPLO: Falta de redirección forzada HTTP a HTTPS puede permitir downgrade attacks",
+      "advisory_url": "",
+      "published_date": "2026-06-12T00:00:00",
+      "is_zero_day": false,
+      "is_supply_chain": false,
+      "fuente": "MOCK"
+    },
+    {
+      "software": "ssl/https",
+      "version": "gws",
+      "port": 443,
+      "protocol": "tcp",
+      "cve_id": "CVE-2024-TLS-HSTS",
+      "cvss_score": 4.3,
+      "severidad": "MEDIUM",
+      "cvss_detail": {
+        "base_score": 4.3,
+        "base_severity": "MEDIUM",
+        "exploitability": 2.8,
+        "impact": 1.4,
+        "vector_string": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:N"
+      },
+      "descripcion": "EJEMPLO: Ausencia de HSTS preload puede permitir SSL stripping en primera conexión",
+      "advisory_url": "",
+      "published_date": "2026-06-12T00:00:00",
+      "is_zero_day": false,
+      "is_supply_chain": false,
+      "fuente": "MOCK"
+    },
+    {
+      "software": "web-application",
+      "version": "google-web-app",
+      "port": 443,
+      "protocol": "tcp",
+      "cve_id": "CVE-2024-XSS-REFLECTED",
+      "cvss_score": 6.1,
+      "severidad": "MEDIUM",
+      "cvss_detail": {
+        "base_score": 6.1,
+        "base_severity": "MEDIUM",
+        "exploitability": 2.8,
+        "impact": 2.7,
+        "vector_string": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
+      },
+      "descripcion": "EJEMPLO: XSS Reflected detectado en parámetro de búsqueda (hallazgo Nuclei)",
+      "advisory_url": "",
+      "published_date": "2026-06-12T00:00:00",
+      "is_zero_day": false,
+      "is_supply_chain": false,
+      "fuente": "MOCK"
+    },
+    {
+      "software": "web-application",
+      "version": "google-web-app",
+      "port": 443,
+      "protocol": "tcp",
+      "cve_id": "CVE-2024-SQLi-CRITICAL",
+      "cvss_score": 9.8,
+      "severidad": "CRITICAL",
+      "cvss_detail": {
+        "base_score": 9.8,
+        "base_severity": "CRITICAL",
+        "exploitability": 3.9,
+        "impact": 5.9,
+        "vector_string": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+      },
+      "descripcion": "EJEMPLO: SQL Injection crítica en parámetro de búsqueda permite acceso a base de datos (hallazgo Nuclei)",
+      "advisory_url": "",
+      "published_date": "2026-06-12T00:00:00",
+      "is_zero_day": false,
+      "is_supply_chain": false,
+      "fuente": "MOCK"
+    },
+    {
+      "software": "web-server",
+      "version": "unknown",
+      "port": 443,
+      "protocol": "tcp",
+      "cve_id": "CVE-2024-BUFFER-OVERFLOW",
+      "cvss_score": 9.0,
+      "severidad": "CRITICAL",
+      "cvss_detail": {
+        "base_score": 9.0,
+        "base_severity": "CRITICAL",
+        "exploitability": 3.9,
+        "impact": 5.9,
+        "vector_string": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H"
+      },
+      "descripcion": "EJEMPLO: Buffer overflow potencial detectado en campo de login (hallazgo Nuclei)",
+      "advisory_url": "",
+      "published_date": "2026-06-12T00:00:00",
+      "is_zero_day": true,
+      "is_supply_chain": false,
+      "fuente": "MOCK"
+    }
+  ],
+  "total_cves": 5,
+  "analisis_cvss": {
+    "critical": 2,
+    "high": 0,
+    "medium": 3,
+    "low": 0,
+    "avg_score": 6.9
+  },
+  "vulnerabilidades_especiales": {
+    "zero_day_count": 1,
+    "supply_chain_count": 0,
+    "zero_day_ids": ["CVE-2024-BUFFER-OVERFLOW"],
+    "supply_chain_ids": []
+  },
+  "timestamp": "2026-06-12T04:32:00.000000+00:00",
+  "nota": "MOCK indica dato demostrativo basado en hallazgos de ag4 y ag5. CVSS detail incluye Base/Exploitability/Impact scores. Zero-day identificado."
+}

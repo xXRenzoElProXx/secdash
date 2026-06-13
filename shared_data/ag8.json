@@ -1,0 +1,49 @@
+{
+  "agent": "AG8_THREAT_INTELLIGENCE",
+  "integrante": 3,
+  "target": "google.com",
+  "modo": "mock_demo",
+  "iocs": [
+    {
+      "ip": "142.251.0.139",
+      "abuse_score": 0,
+      "reputacion": "limpio",
+      "campanas_malware": [],
+      "threat_actors": [],
+      "mitre_attack_tactics": [],
+      "indicadores_compromiso": {
+        "tipo": "IP legítima (Google)",
+        "confidence": "High",
+        "observables": {
+          "conexiones_sospechosas": 0,
+          "payloads_maliciosos": 0,
+          "firmas_malware": []
+        }
+      },
+      "analisis_forense": {
+        "volatilidad": "Baja",
+        "persistencia_detectada": false,
+        "artefactos": []
+      },
+      "fuente": "MOCK",
+      "pais": "US",
+      "isp": "Google LLC",
+      "dominio": "1e100.net",
+      "tipo_uso": "Content Delivery Network",
+      "total_reportes": 0,
+      "detalle": "IP legítima de infraestructura Google. Sin indicadores de compromiso."
+    }
+  ],
+  "total_iocs": 1,
+  "resumen_amenazas": {
+    "maliciosos": 0,
+    "sospechosos": 0,
+    "limpios": 1,
+    "internos": 0,
+    "campanas_activas": 0,
+    "threat_actors_unicos": 0,
+    "mitre_tactics_detected": 0
+  },
+  "timestamp": "2026-06-12T04:33:00.000000+00:00",
+  "nota": "MOCK indica dato demostrativo con conceptos del curso: IoCs, malware, threat actors, MITRE ATT&CK, análisis forense. IP de Google sin indicadores maliciosos."
+}
