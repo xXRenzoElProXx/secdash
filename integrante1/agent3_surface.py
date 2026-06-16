@@ -1,16 +1,3 @@
-"""
-AGENTE 3 — Attack Surface
-Integrante 1
-
-Qué hace:
-  Lee ag1.json y ag2.json, y usa IA para identificar la superficie
-  de ataque, activos críticos y ranking de prioridad de riesgo.
-
-  NO escanea nada nuevo — solo razona sobre los datos existentes.
-
-Salida: shared_data/ag3.json
-"""
-
 import json
 import os
 import re
@@ -30,9 +17,6 @@ else:
     ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     AI_MODEL = "gpt-4o-mini"
 
-
-# ─── Leer JSONs de entrada ───────────────────────────────────────────────────
-
 def leer_json(path, nombre):
     if not os.path.exists(path):
         print(f"   ⚠ No se encontró {nombre}. Usando datos vacíos.")
@@ -40,15 +24,7 @@ def leer_json(path, nombre):
     with open(path) as f:
         return json.load(f)
 
-
-# ─── Análisis con IA ─────────────────────────────────────────────────────────
-
 def analizar_superficie(ag1, ag2):
-    """
-    Envía los datos de ag1 y ag2 a la IA para que identifique
-    la superficie de ataque, control de acceso, bastionado y 
-    genere un ranking de prioridades.
-    """
     contexto = f"""
 === DATOS DE RECONOCIMIENTO (Agente 1) ===
 Dominio: {ag1.get('target', 'desconocido')}
@@ -151,15 +127,11 @@ Responde SOLO con el JSON, sin texto adicional ni markdown."""
             "recomendacion_inmediata": raw[:300]
         }
 
-
-# ─── Agente principal ────────────────────────────────────────────────────────
-
 def run_agent():
     print(f"\n🎯 Agente 3 — Attack Surface")
 
     base = os.path.join(os.path.dirname(__file__), "..", "shared_data")
 
-    # 1. Leer ag1.json y ag2.json
     print("   Leyendo ag1.json y ag2.json...")
     ag1 = leer_json(os.path.join(base, "ag1.json"), "ag1.json")
     ag2 = leer_json(os.path.join(base, "ag2.json"), "ag2.json")
@@ -168,11 +140,9 @@ def run_agent():
         print("   ❌ No hay datos de entrada. Ejecuta primero agent1 y agent2.")
         return {}
 
-    # 2. Analizar con IA
     print("   🤖 Analizando superficie de ataque con IA...")
     analisis = analizar_superficie(ag1, ag2)
 
-    # 3. Construir resultado
     resultado = {
         "target": ag1.get("target", ag2.get("target", "desconocido")),
         "ip": ag1.get("ip", ag2.get("ip", "desconocida")),
@@ -188,7 +158,6 @@ def run_agent():
         "timestamp": datetime.now(UTC).isoformat()
     }
 
-    # 4. Guardar
     output_path = os.path.join(base, "ag3.json")
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(resultado, f, indent=2, ensure_ascii=False)
@@ -199,17 +168,14 @@ def run_agent():
     for a in resultado["activos_criticos"][:3]:
         print(f"        → [{a.get('riesgo','?').upper()}] {a.get('nombre','?')}: {a.get('razon','')}")
     
-    # Mostrar análisis de control de acceso
     ctrl = resultado.get('control_acceso', {})
     if ctrl.get('servicios_sin_autenticacion'):
         print(f"      🔓 Servicios sin auth: {len(ctrl.get('servicios_sin_autenticacion', []))}")
     
-    # Mostrar análisis de hardening
     hard = resultado.get('hardening_analysis', {})
     if hard.get('servicios_innecesarios'):
         print(f"      ⚙️ Servicios innecesarios: {len(hard.get('servicios_innecesarios', []))}")
     
-    # Mostrar vectores de post-explotación
     post_exp = resultado.get('post_exploitation_vectors', [])
     if post_exp:
         print(f"      🎯 Vectores post-explotación: {len(post_exp)}")
@@ -218,7 +184,6 @@ def run_agent():
     print(f"      Acción urgente: {resultado['recomendacion_inmediata'][:100]}")
 
     return resultado
-
 
 if __name__ == "__main__":
     run_agent()

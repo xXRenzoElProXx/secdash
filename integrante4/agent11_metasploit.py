@@ -1,21 +1,3 @@
-"""
-AGENTE 11 — Metasploit & Exploit Intelligence (EXPANDIDO)
-Integrante 4
-
-Qué hace:
-  Lee ag7.json (CVEs) y para cada CVE:
-  - Busca en Metasploit Framework
-  - Consulta EPSS (Exploit Prediction Scoring System)
-  - Busca en ExploitDB
-  - Busca PoCs en GitHub (simulado)
-  - Genera priorización de parcheo
-  - Mapea a MITRE ATT&CK
-  
-  SOLO CONSULTA — JAMÁS EJECUTA exploits
-
-Salida: shared_data/ag11.json
-"""
-
 import json
 import os
 import re
@@ -25,13 +7,12 @@ from datetime import datetime, UTC
 from openai import OpenAI
 import requests
 
-USE_REAL_APIS = os.getenv("USE_REAL_APIS", "false").lower() == "true"
+USE_REAL_APIS = os.getenv("USE_REAL_APIS", "true").lower() == "true"
 REQUEST_TIMEOUT = 15
 
-# ─── Configuración IA ───────────────────────────────────────────────────────
 try:
     ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-    AI_MODEL = "minimax-m3:cloud"  # Unificado para todos los integrantes
+    AI_MODEL = "ministral-3:14b-cloud"  # Integrante 4
     # Test de conexión más rápido
     ai.models.list()
     print("   ✓ Ollama conectado")
@@ -40,8 +21,6 @@ except Exception as e:
     print(f"   ⚠️  IA no disponible: {e}")
     print("   ℹ️  Continuando en modo sin IA...")
     ai_available = False
-
-# ─── Helpers ────────────────────────────────────────────────────────────────
 
 def load_json(filename):
     """Carga un JSON desde shared_data/"""
@@ -56,9 +35,8 @@ def load_json(filename):
         print(f"   ❌ Error leyendo {filename}: {e}")
         return None
 
-
 def buscar_en_msfconsole(cve_id):
-    """Busca un CVE en la base de datos de Metasploit usando msfconsole"""
+    
     try:
         # Ejecutar msfconsole en modo script para buscar el CVE
         cmd = f'msfconsole -q -x "search {cve_id}; exit"'
@@ -99,7 +77,6 @@ def buscar_en_msfconsole(cve_id):
         print(f"      ❌ Error: {e}")
         return None
 
-
 def buscar_con_ia(cve_id, descripcion):
     """Fallback: usa IA para sugerir módulos si msfconsole no está disponible"""
     if not ai_available:
@@ -134,7 +111,6 @@ Responde SOLO con el JSON."""
     except Exception as e:
         print(f"      ⚠️  Error en análisis IA: {e}")
         return analisis_basico(cve_id, descripcion)
-
 
 def consultar_epss(cve_id):
     """
@@ -171,7 +147,6 @@ def consultar_epss(cve_id):
         print(f"      ⚠️  Error consultando EPSS: {e}")
     
     return None
-
 
 def buscar_exploitdb(cve_id):
     """
@@ -216,7 +191,6 @@ def buscar_exploitdb(cve_id):
     
     return None
 
-
 def buscar_github_poc(cve_id):
     """
     Busca Proof of Concept en GitHub
@@ -238,7 +212,6 @@ def buscar_github_poc(cve_id):
     
     # En producción usar GitHub API con token
     return None
-
 
 def mapear_att_ck(descripcion, severidad):
     """
@@ -293,7 +266,6 @@ def mapear_att_ck(descripcion, severidad):
         "tactic_name": "Initial Access",
         "techniques": ["T1190 - Exploit Public-Facing Application"]
     }]
-
 
 def calcular_prioridad_parcheo(cve_data, epss_data, msf_modulo, exploitdb, github_poc):
     """
@@ -379,14 +351,10 @@ def calcular_prioridad_parcheo(cve_data, epss_data, msf_modulo, exploitdb, githu
         "factores": factores
     }
 
-
-# ─── Agente principal ────────────────────────────────────────────────────────
-
 def run_agent():
     print(f"\n💥 Agente 11 — Metasploit & Exploit Intelligence (EXPANDIDO)")
     print("   Buscando exploits y calculando prioridades...\n")
 
-    # 1. Cargar CVEs de ag7.json
     print("   [1/2] Cargando ag7.json (CVEs)...")
     ag7 = load_json("ag7.json")
     
@@ -404,7 +372,6 @@ def run_agent():
         cves = ag7.get("cves_encontrados", [])
         print(f"         CVEs encontrados: {len(cves)}")
 
-        # 2. Buscar exploits y analizar
         print("\n   [2/2] Analizando exploitabilidad...")
         print(f"         Modo: {'APIs reales' if USE_REAL_APIS else 'Demo/Mock'}")
         
@@ -531,7 +498,7 @@ def run_agent():
             "agent": "AG11_EXPLOIT_INTEL",
             "integrante": 4,
             "target": ag7.get("target", "desconocido"),
-            "modo": "real_apis" if USE_REAL_APIS else "mock_demo",
+            "modo": "real_apis" if USE_REAL_APIS else "demo",
             "recomendaciones": recomendaciones,
             "resumen": {
                 "total_cves": total,
@@ -558,7 +525,6 @@ def run_agent():
             "timestamp": datetime.now(UTC).isoformat()
         }
 
-    # 3. Guardar resultado
     output_path = os.path.join(
         os.path.dirname(__file__), "..", "shared_data", "ag11.json"
     )
@@ -579,9 +545,6 @@ def run_agent():
         print(f"      ⚠️  {resultado['disclaimer'][:80]}...")
 
     return resultado
-
-
-# ─── Entry point ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     try:

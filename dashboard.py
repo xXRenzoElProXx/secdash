@@ -1,15 +1,7 @@
-"""
-dashboard.py — SecDash AI SOC
-Dashboard principal. Lee los JSONs de shared_data/ y muestra el reporte.
-
-Uso:
-    streamlit run dashboard.py
-"""
-
 import streamlit as st
 import json, os, subprocess
 
-from styles import inject_styles, inject_canvas, inject_clock   # ← módulo de estilos
+from styles import inject_styles, inject_canvas, inject_clock, inject_chat_panel
 
 st.set_page_config(
     page_title="SecDash AI SOC",
@@ -18,13 +10,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ── Estilos y canvas ──────────────────────────────────────────────────────────
 inject_styles()
 inject_canvas()
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  HELPERS
-# ══════════════════════════════════════════════════════════════════════════════
+inject_chat_panel()
 
 def load_json(n):
     p = os.path.join("shared_data", f"ag{n}.json")
@@ -67,17 +55,12 @@ def ioc_row(ioc):
         f'</div></div>'
     )
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  DATOS
-# ══════════════════════════════════════════════════════════════════════════════
-
-ag = {i: load_json(i) for i in range(1, 12)}
+ag = {i: load_json(i) for i in range(1, 13)}
 
 activos_list = (ag[3] or {}).get("activos_criticos", [])
 altos = sum(1 for a in activos_list if a.get("riesgo") == "alto")
 riesgo = "ALTO" if altos >= 2 else ("MEDIO" if altos == 1 else "BAJO")
 
-# Usar score del Agente 9 si está disponible, sino calcular básico
 if ag[9]:
     score = ag[9].get("score_total", 0)
     nivel = ag[9].get("nivel", "BAJO")
@@ -92,17 +75,13 @@ elif ag[2] and ag[3]:
 else:
     score, nivel = "—", "—"
 
-agentes_ok = sum(1 for i in range(1,12) if ag[i])
+agentes_ok = sum(1 for i in range(1,13) if ag[i])
 target      = (ag[1] or ag[2] or {}).get("target", "sin_objetivo")
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  SIDEBAR
-# ══════════════════════════════════════════════════════════════════════════════
 
 AGENT_LABELS = {
     1:"DISCOVERY", 2:"NETWORK",  3:"SURFACE",  4:"NIKTO",
     5:"NUCLEI",    6:"OWASP",    7:"CVE",       8:"THREAT",
-    9:"RISK",      10:"COMPLY",  11:"EXPLOITS"
+    9:"RISK",      10:"COMPLY",  11:"EXPLOITS", 12:"CHATBOT"
 }
 NAV = [
     ("OVERVIEW",    "Métricas / Agentes 1-3"),
@@ -114,7 +93,6 @@ NAV = [
     ("RISK SCORE",  "Agente 9 — Correlación 0-100"),
     ("COMPLIANCE",  "Agente 10 — Controles"),
     ("EXPLOITS",    "Agente 11 — Metasploit"),
-    ("SOC CHAT",    "Agente 12 — Asistente IA"),
 ]
 
 with st.sidebar:
@@ -173,7 +151,7 @@ with st.sidebar:
                 '<div style="font-family:JetBrains Mono,monospace;font-size:.55rem;'
                 'color:#265c36;letter-spacing:.16em;margin-bottom:5px;">AGENT STATUS</div>',
                 unsafe_allow_html=True)
-    for i in range(1, 12):
+    for i in range(1, 12):  # Solo hasta AG11, AG12 es el chat en el panel lateral
         ok  = ag[i] is not None
         c   = "#00ff6a" if ok else "#1e3a26"
         mrk = "▶" if ok else "·"
@@ -184,10 +162,6 @@ with st.sidebar:
             f'font-size:.56rem;letter-spacing:.05em;">AG{i:02d} {AGENT_LABELS[i]}</span>'
             f'</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  HEADER PRINCIPAL
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown(f"""
 <div class="anim-up" style="
@@ -227,10 +201,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 inject_clock()
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  TARGET ACQUISITION
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown('<div class="sec-hdr anim-up d1">// TARGET ACQUISITION</div>', unsafe_allow_html=True)
 
@@ -321,9 +291,7 @@ for col, n, lbl in [(c1,1,"AG1 :: DISCOVERY"),(c2,2,"AG2 :: NETWORK"),(c3,3,"AG3
 
 st.divider()
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  MÉTRICAS
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown('<div class="sec-hdr">// THREAT METRICS</div>', unsafe_allow_html=True)
 m1, m2, m3, m4 = st.columns(4)
@@ -334,9 +302,7 @@ m4.metric("OPEN PORTS",    len((ag[2] or {}).get("services", [])))
 
 st.divider()
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  NETWORK & OWASP
-# ══════════════════════════════════════════════════════════════════════════════
 
 cn, co = st.columns(2)
 with cn:
@@ -357,9 +323,7 @@ with co:
 
 st.divider()
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  WEB VULNERABILITY SCANS (AGENTS 4 & 5)
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown('<div class="sec-hdr">// WEB VULNERABILITY ASSESSMENT</div>', unsafe_allow_html=True)
 
@@ -386,9 +350,7 @@ with w2:
 
 st.divider()
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  CVEs & ACTIVOS CRÍTICOS
-# ══════════════════════════════════════════════════════════════════════════════
 
 cc, ca = st.columns(2)
 with cc:
@@ -406,9 +368,7 @@ with ca:
     else:
         st.info("PENDING — run agent 3")
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  SECURITY ANALYSIS (AG2 & AG3 ENHANCEMENTS)
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.divider()
 st.markdown('<div class="sec-hdr">// FIREWALL & IDS DETECTION</div>', unsafe_allow_html=True)
@@ -583,9 +543,7 @@ if ag[3]:
 
 st.divider()
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  INTEGRANTE 3 — CVE & THREAT INTEL DASHBOARD
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown('<div class="sec-hdr">// INTEGRANTE 3 — INTELLIGENCE & RISK ANALYSIS</div>', unsafe_allow_html=True)
 
@@ -718,9 +676,7 @@ if ag[9]:
 
 st.divider()
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  COMPLIANCE (INTEGRANTE 4)
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown('<div class="sec-hdr">// COMPLIANCE STATUS</div>', unsafe_allow_html=True)
 
@@ -832,9 +788,7 @@ else:
 
 st.divider()
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  EXPLOIT INTELLIGENCE (AGENT 11)
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown('<div class="sec-hdr">// EXPLOIT INTELLIGENCE & PATCH PRIORITIZATION</div>', unsafe_allow_html=True)
 
@@ -1060,9 +1014,7 @@ else:
 
 st.divider()
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  RISK CORRELATION (AGENT 9)
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown('<div class="sec-hdr">// CONSOLIDATED RISK ASSESSMENT</div>', unsafe_allow_html=True)
 
@@ -1154,29 +1106,24 @@ else:
     st.info("PENDING — awaiting agent 9 (Risk Correlation)")
 
 st.divider()
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  SOC ASSISTANT
-# ══════════════════════════════════════════════════════════════════════════════
-
-st.markdown('<div class="sec-hdr">// SOC ASSISTANT — AI CHAT INTERFACE</div>', unsafe_allow_html=True)
+st.markdown('<div class="sec-hdr">// CHAT INTERACTIVO — CONSULTAS EN TIEMPO REAL</div>', unsafe_allow_html=True)
 
 CHAT_HISTORY_FILE = os.path.join("shared_data", "chat_history.json")
+AI_CHAT_MODEL = "ministral-3:14b-cloud"  # Integrante 4 - Definido antes del try
 
 try:
     from openai import OpenAI
     chat_ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-    AI_CHAT_MODEL = "minimax-m3:cloud"
     chat_available = True
     st.markdown(
         '<div style="font-family:JetBrains Mono,monospace;font-size:.64rem;color:#00ff6a;margin-bottom:.8rem;">'
-        '[ AG12 ] ✓ Chat AI ready — Bilingüe: English/Español | Historial persistente'
+        f'[ CHAT ] ✓ IA lista — {AI_CHAT_MODEL} | Bilingüe: English/Español'
         '</div>', unsafe_allow_html=True)
 except Exception as e:
     chat_available = False
     st.markdown(
         f'<div style="font-family:JetBrains Mono,monospace;font-size:.64rem;color:#ffcc00;margin-bottom:.8rem;">'
-        f'[ AG12 ] ⚠ Chat AI offline — {str(e)[:50]}'
+        f'[ CHAT ] ⚠ IA offline — {str(e)[:50]}'
         '</div>', unsafe_allow_html=True)
 
 def load_chat_history():
@@ -1185,7 +1132,7 @@ def load_chat_history():
             return json.load(f)
     except:
         return [
-            {"role": "assistant", "content": "🛡️ **SOC Assistant online**\n\nPuedo ayudarte en **español** o **English**:\n- Analizar amenazas y vulnerabilidades\n- Explicar CVEs y su impacto\n- Revisar cumplimiento normativo\n- Recomendar acciones de seguridad\n\n💡 **Tip**: Pregunta sobre agentes específicos (ej: *\"¿Qué encontró el Agente 10?\"*)"}
+            {"role": "assistant", "content": "🤖 **SecDash Security Assistant** en línea.\n\nPuedo ayudarte en **español** o **English**:\n- Analizar vulnerabilidades y CVEs\n- Explicar hallazgos de seguridad\n- Recomendar acciones de remediación\n- Interpretar datos de threat intelligence\n\n💡 Pregunta sobre cualquier dato del dashboard."}
         ]
 
 def save_chat_history(messages):
@@ -1210,7 +1157,8 @@ with col_download:
     st.download_button(
         label="📥 Descargar Chat",
         data=chat_json,
-        file_name=f"soc_chat_{target}.json",
+        file_name=f"secdash_chat_{target}.json",
+        key="download_chat",
         mime="application/json"
     )
 
@@ -1223,55 +1171,26 @@ if prompt := st.chat_input("Escribe tu pregunta en español o inglés..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    context_full = f"""
-CONTEXTO COMPLETO DE ANÁLISIS DE SEGURIDAD:
+    # Crear contexto con datos del dashboard
+    dashboard_context = f"""
+DATOS ACTUALES DEL DASHBOARD:
+- Target: {target}
+- Agentes activos: {agentes_ok}/12
+- Risk Score: {score}/100 ({nivel})
 
-=== AGENTE 1: DESCUBRIMIENTO DE ACTIVOS ===
-{json.dumps(ag[1], indent=2, ensure_ascii=False) if ag[1] else "No disponible"}
-
-=== AGENTE 2: ESCANEO DE RED ===
-{json.dumps(ag[2], indent=2, ensure_ascii=False) if ag[2] else "No disponible"}
-
-=== AGENTE 3: SUPERFICIE DE ATAQUE ===
-{json.dumps(ag[3], indent=2, ensure_ascii=False) if ag[3] else "No disponible"}
-
-=== AGENTE 4: NIKTO WEB SCAN ===
-{json.dumps(ag[4], indent=2, ensure_ascii=False) if ag[4] else "No disponible"}
-
-=== AGENTE 5: NUCLEI TEMPLATES ===
-{json.dumps(ag[5], indent=2, ensure_ascii=False) if ag[5] else "No disponible"}
-
-=== AGENTE 6: ANÁLISIS OWASP ===
-{json.dumps(ag[6], indent=2, ensure_ascii=False) if ag[6] else "No disponible"}
-
-=== AGENTE 7: INTELIGENCIA DE CVEs ===
-{json.dumps(ag[7], indent=2, ensure_ascii=False) if ag[7] else "No disponible"}
-
-=== AGENTE 8: THREAT INTELLIGENCE ===
-{json.dumps(ag[8], indent=2, ensure_ascii=False) if ag[8] else "No disponible"}
-
-=== AGENTE 9: CORRELACIÓN DE RIESGO ===
-{json.dumps(ag[9], indent=2, ensure_ascii=False) if ag[9] else "No disponible"}
-
-=== AGENTE 10: CUMPLIMIENTO NORMATIVO ===
-{json.dumps(ag[10], indent=2, ensure_ascii=False) if ag[10] else "No disponible"}
-
-=== AGENTE 11: ASESOR METASPLOIT ===
-{json.dumps(ag[11], indent=2, ensure_ascii=False) if ag[11] else "No disponible"}
-
-RESUMEN:
-- Objetivo: {target}
-- Agentes activos: {agentes_ok}/11
-- Puntuación de riesgo: {score}/100 ({nivel})
-- Puertos abiertos: {len(ag[2].get('services', [])) if ag[2] else 0}
-- Activos críticos: {len(activos_list)}
-- Hallazgos web: {len((ag[4] or {}).get('hallazgos', [])) + len((ag[5] or {}).get('hallazgos', []))}
+RESUMEN DE DATOS:
+- Servicios detectados: {len((ag[2] or {}).get('services', []))}
+- Vulnerabilidades web: {len((ag[4] or {}).get('hallazgos', [])) + len((ag[5] or {}).get('hallazgos', []))}
 - CVEs encontrados: {len((ag[7] or {}).get('cves_encontrados', []))}
+- IOCs analizados: {len((ag[8] or {}).get('iocs', []))}
+- Controles compliance: {len((ag[10] or {}).get('compliance_checks', []))}
+
+Tienes acceso contextual a todos estos datos para dar respuestas precisas.
 """
 
     with st.chat_message("assistant"):
         if not chat_available:
-            response_text = "⚠️ **Chat IA desconectado**\n\nAsegúrate de que Ollama esté corriendo:\n```bash\nollama serve\nollama pull minimax-m3:cloud\n```"
+            response_text = f"⚠️ **Chat IA desconectado**\n\nAsegúrate de que Ollama esté corriendo:\n```bash\nollama serve\nollama pull {AI_CHAT_MODEL}\n```"
             st.markdown(response_text)
         else:
             with st.spinner("Analizando..." if any(c in prompt.lower() for c in "áéíóúñ¿¡") else "Analyzing..."):
@@ -1279,41 +1198,47 @@ RESUMEN:
                     response = chat_ai.chat.completions.create(
                         model=AI_CHAT_MODEL,
                         messages=[
-                            {"role": "system", "content": f"""Eres un asistente SOC (Centro de Operaciones de Seguridad) bilingüe.
+                            {"role": "system", "content": f"""Eres un asistente de ciberseguridad especializado en análisis SOC.
 
-INSTRUCCIONES CRÍTICAS:
-1. DETECTA EL IDIOMA de la pregunta del usuario y responde en el MISMO IDIOMA
-2. SIEMPRE cita la fuente del agente al referenciar datos:
-   - Español: "Según el Agente 3...", "El Agente 7 detectó...", "Como muestra el Agente 10..."
-   - English: "According to Agent 3...", "Agent 7 detected...", "As shown by Agent 10..."
-3. Sé técnico, preciso y accionable
-4. Prioriza hallazgos críticos sobre problemas menores
-5. Referencia CVEs específicos, puertos, servicios o controles de cumplimiento
+ROLE: Analista senior con experiencia en:
+- Análisis de vulnerabilidades (Nikto, Nuclei, CVEs)
+- Threat intelligence y reputación de IOCs
+- Compliance y controles de seguridad
+- MITRE ATT&CK, OWASP Top 10, frameworks ISO 27001
 
-{context_full}
+INSTRUCCIONES:
+1. DETECTA EL IDIOMA de la pregunta y responde en el MISMO IDIOMA
+2. Sé técnico, preciso y accionable
+3. Cita la fuente del agente cuando referencien datos específicos
+   - Español: "Según el Agente 4...", "El Agente 7 detectó..."
+   - English: "According to Agent 4...", "Agent 7 detected..."
+4. Prioriza hallazgos críticos y recomendaciones prácticas
+5. Usa emojis para claridad: 🔴 (crítico), 🟡 (medio), 🟢 (bajo)
 
-Al responder, SIEMPRE indica qué agente proporcionó cada información."""},
-                            *st.session_state.messages
+CONTEXTO DEL DASHBOARD:
+{dashboard_context}
+
+Responde basándote en estos datos reales cuando sea relevante."""},
+                            *st.session_state.messages[-10:],  # Últimas 10 interacciones
+                            {"role": "user", "content": prompt}
                         ],
+                        max_tokens=800,
                         temperature=0.3,
+                        top_p=0.9
                     )
                     response_text = response.choices[0].message.content
                     st.markdown(response_text)
                 except Exception as e:
-                    response_text = f"❌ **Error de comunicación con IA**: {str(e)}\n\nVerifica que Ollama esté corriendo y el modelo instalado."
+                    response_text = f"❌ **Error de comunicación con IA**: {str(e)}\n\nVerifica que Ollama esté corriendo y el modelo {AI_CHAT_MODEL} instalado."
                     st.markdown(response_text)
 
     st.session_state.messages.append({"role": "assistant", "content": response_text})
     save_chat_history(st.session_state.messages)
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  FOOTER
-# ══════════════════════════════════════════════════════════════════════════════
 
 st.divider()
 st.markdown(
     f'<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.4rem;'
     f'font-family:JetBrains Mono,monospace;font-size:.58rem;color:#1a3320;">'
     f'<span>SECDASH AI SOC — CURSO DE SEGURIDAD EN COMPUTACIÓN</span>'
-    f'<span>AGENTS: {agentes_ok}/11 · TARGET: {target}</span>'
+    f'<span>AGENTS: {agentes_ok}/12 · TARGET: {target}</span>'
     f'</div>', unsafe_allow_html=True)

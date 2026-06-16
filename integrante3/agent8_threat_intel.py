@@ -1,15 +1,3 @@
-"""
-AGENTE 8 — Threat Intelligence
-Integrante 3
-
-Lee shared_data/ag1.json y shared_data/ag2.json para extraer IPs.
-Luego genera shared_data/ag8.json con reputación básica de IOCs.
-
-Modo:
-- Si USE_REAL_APIS=true y existe ABUSEIPDB_API_KEY en .env, consulta AbuseIPDB.
-- Si no, trabaja en modo demo para que el dashboard funcione.
-"""
-
 import json
 import os
 import re
@@ -21,18 +9,29 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-USE_REAL_APIS = os.getenv("USE_REAL_APIS", "false").lower() == "true"
+USE_REAL_APIS = os.getenv("USE_REAL_APIS", "true").lower() == "true"
 ABUSEIPDB_API_KEY = os.getenv("ABUSEIPDB_API_KEY", "")
 REQUEST_TIMEOUT = 20
 
+USE_AI_ANALYSIS = False  # Temporalmente deshabilitado por errores de parsing
+
+if USE_AI_ANALYSIS:
+    try:
+        from openai import OpenAI
+        ai_client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+        AI_MODEL = "gpt-oss:20b-cloud"
+        AI_AVAILABLE = True
+    except ImportError:
+        print("⚠️ OpenAI no disponible.")
+        AI_AVAILABLE = False
+else:
+    AI_AVAILABLE = False
 
 def root_path():
     return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-
 def shared_path(filename):
     return os.path.join(root_path(), "shared_data", filename)
-
 
 def leer_json(path, default=None):
     if default is None:
@@ -48,13 +47,11 @@ def leer_json(path, default=None):
         print(f"⚠ El archivo {path} no tiene JSON válido")
         return default
 
-
 def guardar_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-
 
 def es_ip_valida(valor):
     try:
@@ -62,7 +59,6 @@ def es_ip_valida(valor):
         return True
     except ValueError:
         return False
-
 
 def es_ip_publica(ip):
     try:
@@ -78,14 +74,86 @@ def es_ip_publica(ip):
     except ValueError:
         return False
 
+def buscar_ips_en_texto(texto):
+    texto = str(texto or "")
+    patron_ipv4 = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
+
+def ai_analyze_threat_intel(ioc_data: dict) -> dict:
+    if not AI_AVAILABLE:
+        return {}
+    
+    try:
+        ip = ioc_data.get("ip", "")
+        country = ioc_data.get("country", "")
+        abuse_confidence = ioc_data.get("abuse_confidence", 0)
+        usage_type = ioc_data.get("usage_type", "")
+        categories = ioc_data.get("categories", [])
+        
+        prompt = f"""Analiza este IOC:
+
+IP: {ip}
+PAÍS: {country}
+CONFIANZA ABUSO: {abuse_confidence}%
+USO: {usage_type}
+CATEGORÍAS: {categories}
+
+Responde en JSON con:
+1. "perfil_amenaza": Tipo de actor/campaña probable
+2. "contexto_geopolitico": Relevancia del país
+3. "tacticas_ttp": Técnicas MITRE ATT&CK comunes
+4. "campanas_relacionadas": Campañas conocidas
+5. "nivel_sofisticacion": BÁSICO/INTERMEDIO/AVANZADO/APT
+6. "recomendaciones_blocking": Acciones de bloqueo
+7. "indicadores_adicionales": Qué más monitorear
+8. "contexto_temporal": Tendencias recientes
+
+Responde SOLO en JSON válido.
+"""
+        
+        response = ai_client.chat.completions.create(
+            model=AI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=800,
+            temperature=0.2
+        )
+        
+        analysis_text = response.choices[0].message.content.strip()
+        
+        if not analysis_text:
+            raise ValueError("Respuesta vacía de la IA")
+        
+        # Limpiar markdown
+        if analysis_text.startswith('```'):
+            analysis_text = analysis_text.replace('```json', '').replace('```', '').strip()
+        
+        # Intentar parsear JSON
+        parsed = json.loads(analysis_text)
+        
+        # Validar que sea diccionario
+        if not isinstance(parsed, dict):
+            raise ValueError("Respuesta no es un diccionario")
+        
+        return parsed
+        
+    except Exception as e:
+        print(f"⚠️ Error en análisis IA: {e}")
+        return {
+            "perfil_amenaza": "Requiere análisis manual",
+            "contexto_geopolitico": "No determinado",
+            "tacticas_ttp": ["Consultar MITRE ATT&CK"],
+            "campanas_relacionadas": ["Investigación adicional requerida"],
+            "nivel_sofisticacion": "NO_DETERMINADO",
+            "recomendaciones_blocking": ["Bloqueo preventivo recomendado"],
+            "indicadores_adicionales": ["Monitorear tráfico relacionado"],
+            "contexto_temporal": "Análisis pendiente",
+            "ia_error": str(e)
+        }
 
 def buscar_ips_en_texto(texto):
     texto = str(texto or "")
     patron_ipv4 = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
     posibles = re.findall(patron_ipv4, texto)
-
     return [ip for ip in posibles if es_ip_valida(ip)]
-
 
 def extraer_ips_recursivo(obj):
     """
@@ -93,6 +161,9 @@ def extraer_ips_recursivo(obj):
     cambien un poco su estructura.
     """
     ips = []
+    
+    if obj is None:
+        return ips
 
     if isinstance(obj, dict):
         for _, valor in obj.items():
@@ -110,7 +181,6 @@ def extraer_ips_recursivo(obj):
 
     return ips
 
-
 def reputacion_por_score(score):
     try:
         score = int(score)
@@ -123,17 +193,12 @@ def reputacion_por_score(score):
         return "sospechoso"
     return "limpio"
 
-
 def consultar_abuseipdb(ip):
     """
     Consulta reputación de IP en AbuseIPDB cuando hay API key.
-    Si falla, devuelve None para no romper el agente.
+    Si USE_REAL_APIS=true pero no hay key, usa análisis local.
     """
     if not USE_REAL_APIS:
-        return None
-
-    if not ABUSEIPDB_API_KEY:
-        print("⚠ USE_REAL_APIS=true, pero falta ABUSEIPDB_API_KEY en .env")
         return None
 
     if not es_ip_publica(ip):
@@ -144,6 +209,19 @@ def consultar_abuseipdb(ip):
             "campanas_malware": [],
             "fuente": "LOCAL_CHECK",
             "detalle": "IP privada o no pública. No se consulta reputación externa."
+        }
+
+    if not ABUSEIPDB_API_KEY:
+        print(f"⚠ USE_REAL_APIS=true, pero falta ABUSEIPDB_API_KEY en .env")
+        print(f"  → Usando análisis local para {ip}")
+        # Usar análisis básico local en lugar de None
+        return {
+            "ip": ip,
+            "abuse_score": 0,
+            "reputacion": "no_verificado",
+            "campanas_malware": [],
+            "fuente": "LOCAL_ANALYSIS",
+            "detalle": "Sin API key - análisis básico. IP pública no verificada en bases de amenazas."
         }
 
     url = "https://api.abuseipdb.com/api/v2/check"
@@ -187,7 +265,6 @@ def consultar_abuseipdb(ip):
         "total_reportes": data.get("totalReports", 0),
         "detalle": "Consulta de reputación realizada mediante API externa."
     }
-
 
 def generar_ioc_demo(ip):
     """
@@ -261,7 +338,6 @@ def generar_ioc_demo(ip):
         "detalle": "Resultado demostrativo con conceptos del curso: IoCs, malware, threat actors, MITRE ATT&CK. Para datos reales activar USE_REAL_APIS=true."
     }
 
-
 def run_agent():
     print("\n🕵️ Agente 8 — Threat Intelligence")
 
@@ -301,15 +377,27 @@ def run_agent():
         if resultado_real:
             iocs.append(resultado_real)
         else:
+            # Si USE_REAL_APIS=false, usar demo
             iocs.append(generar_ioc_demo(ip))
+
+    if AI_AVAILABLE and USE_AI_ANALYSIS and iocs:
+        print("🤖 Aplicando análisis IA...")
+        for ioc in iocs:
+            ai_analysis = ai_analyze_threat_intel(ioc)
+            if ai_analysis:
+                ioc["inteligencia_ia"] = ai_analysis
+        print(f"✅ {len(iocs)} IOCs procesados")
 
     resultado = {
         "agent": "AG8_THREAT_INTELLIGENCE",
         "integrante": 3,
         "target": target,
-        "modo": "real_abuseipdb" if USE_REAL_APIS else "mock_demo",
+        "modo": "real_abuseipdb" if USE_REAL_APIS else "demo",
+        "api_key_configurada": bool(ABUSEIPDB_API_KEY) if USE_REAL_APIS else False,
         "iocs": iocs,
         "total_iocs": len(iocs),
+        "ia_habilitada": AI_AVAILABLE and USE_AI_ANALYSIS,
+        "modelo_ia": AI_MODEL if AI_AVAILABLE else None,
         "resumen_amenazas": {
             "maliciosos": sum(1 for ioc in iocs if ioc.get("reputacion") == "malicioso"),
             "sospechosos": sum(1 for ioc in iocs if ioc.get("reputacion") == "sospechoso"),
@@ -328,7 +416,7 @@ def run_agent():
             ))
         },
         "timestamp": datetime.now(UTC).isoformat(),
-        "nota": "MOCK indica dato demostrativo con conceptos del curso: IoCs, malware, threat actors, MITRE ATT&CK, análisis forense. Para datos reales activar USE_REAL_APIS=true."
+        "nota": "Modo REAL activado. Sin API key se usa análisis local. Para modo demo, establecer USE_REAL_APIS=false en .env"
     }
 
     output_path = shared_path("ag8.json")
@@ -341,7 +429,6 @@ def run_agent():
         print(f" → {ioc['ip']} | {ioc['reputacion']} | score {ioc['abuse_score']}/100")
 
     return resultado
-
 
 if __name__ == "__main__":
     run_agent()

@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""
-Agente 06 - OWASP Classifier
-Lee shared_data/ag4.json y shared_data/ag5.json, clasifica los hallazgos en OWASP Top 10 2021 y genera shared_data/ag6.json.
-
-Uso:
-  python3 agent6_owasp_classifier.py
-  python3 agent6_owasp_classifier.py --use-ollama --ollama-model minimax-m3:cloud
-
-Nota: si Ollama no responde, usa reglas locales como fallback para que el flujo no se rompa.
-"""
 
 import argparse
 import json
@@ -20,9 +10,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import requests
-except ImportError:  # El fallback por reglas funciona sin requests.
+except ImportError:
     requests = None
-
 
 DEFAULT_AG4 = Path("shared_data/ag4.json")
 DEFAULT_AG5 = Path("shared_data/ag5.json")
@@ -54,14 +43,11 @@ MITIGACIONES = {
     "A10": "Validar destinos de peticiones del servidor, usar listas permitidas, segmentar red y bloquear acceso a redes internas/metadata.",
 }
 
-
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-
 def ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-
 
 def load_json(path: Path) -> Dict[str, Any]:
     if not path.exists():
@@ -70,7 +56,6 @@ def load_json(path: Path) -> Dict[str, Any]:
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return {}
-
 
 def extract_hallazgos(data: Dict[str, Any], fuente: str) -> List[Dict[str, Any]]:
     items = data.get("hallazgos", [])
@@ -94,7 +79,6 @@ def extract_hallazgos(data: Dict[str, Any], fuente: str) -> List[Dict[str, Any]]
         })
     return normalized
 
-
 def text_for_classification(h: Dict[str, Any]) -> str:
     pieces = [
         h.get("hallazgo_id"),
@@ -106,12 +90,7 @@ def text_for_classification(h: Dict[str, Any]) -> str:
     ]
     return " ".join(str(p) for p in pieces if p).lower()
 
-
 def classify_by_rules(h: Dict[str, Any]) -> Tuple[str, str]:
-    """
-    Clasificación local explicable. Sirve como fallback o como clasificación base.
-    Incluye conceptos del curso: buffer overflow, validación de entrada, criptografía.
-    """
     t = text_for_classification(h)
 
     rules = [
@@ -171,7 +150,6 @@ def classify_by_rules(h: Dict[str, Any]) -> Tuple[str, str]:
 
     return "A05", "Clasificación por defecto: el hallazgo parece una configuración o exposición web general."
 
-
 def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if not match:
@@ -180,7 +158,6 @@ def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
         return json.loads(match.group(0))
     except json.JSONDecodeError:
         return None
-
 
 def classify_with_ollama(h: Dict[str, Any], model: str, base_url: str) -> Optional[Dict[str, Any]]:
     if requests is None:
@@ -227,7 +204,6 @@ Hallazgo:
     except Exception:
         return None
 
-
 def classify_hallazgo(h: Dict[str, Any], use_ollama: bool, model: str, base_url: str) -> Dict[str, Any]:
     if use_ollama:
         ai_result = classify_with_ollama(h, model, base_url)
@@ -258,7 +234,6 @@ def classify_hallazgo(h: Dict[str, Any], use_ollama: bool, model: str, base_url:
         "clasificador": "reglas_locales",
     }
 
-
 def build_heatmap(clasificaciones: List[Dict[str, Any]]) -> Dict[str, int]:
     heatmap = {code: 0 for code in OWASP_2021}
     for c in clasificaciones:
@@ -267,14 +242,13 @@ def build_heatmap(clasificaciones: List[Dict[str, Any]]) -> Dict[str, int]:
             heatmap[code] += 1
     return heatmap
 
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="Agente 06 - Clasificador OWASP Top 10 2021")
     parser.add_argument("--ag4", default=str(DEFAULT_AG4), help="Ruta de ag4.json")
     parser.add_argument("--ag5", default=str(DEFAULT_AG5), help="Ruta de ag5.json")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT), help="Ruta de salida ag6.json")
     parser.add_argument("--use-ollama", action="store_true", help="Usar Ollama local para clasificar; si falla, usa reglas")
-    parser.add_argument("--ollama-model", default="minimax-m3:cloud", help="Modelo local de Ollama (unificado para todos los integrantes)")
+    parser.add_argument("--ollama-model", default="gemma4:31b-cloud", help="Modelo local de Ollama (Integrante 2)")
     parser.add_argument("--ollama-url", default="http://localhost:11434", help="URL base de Ollama")
     args = parser.parse_args()
 
@@ -306,7 +280,6 @@ def main() -> int:
     output.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[Agente 6] OK -> {output} ({result['total_clasificados']} clasificaciones)")
     return 0
-
 
 if __name__ == "__main__":
     try:

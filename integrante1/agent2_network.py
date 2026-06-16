@@ -1,14 +1,3 @@
-"""
-AGENTE 2 — Network Exposure
-Integrante 1
-
-Qué hace:
-  Lee la IP del ag1.json, corre nmap para detectar puertos
-  abiertos, servicios y versiones de software.
-
-Salida: shared_data/ag2.json
-"""
-
 import json
 import subprocess
 import os
@@ -29,18 +18,10 @@ else:
     ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     AI_MODEL = "gpt-4o-mini"
 
-
-# ─── Escaneo nmap ────────────────────────────────────────────────────────────
-
 def run_nmap(ip):
-    """
-    Corre nmap con detección de versiones, OS y scripts NSE de seguridad.
-    Incluye detección de firewall/IDS.
-    """
     print(f"   Ejecutando nmap sobre {ip}...")
     print("   (puede tardar 1-2 minutos)")
 
-    # Escaneo completo: versiones + OS + scripts de seguridad + detección firewall
     cmd = f"nmap -sV -O --script=banner,ssl-cert,ssh-auth-methods,firewall-bypass --open -T4 {ip}"
     try:
         result = subprocess.run(
@@ -52,9 +33,7 @@ def run_nmap(ip):
     except Exception as e:
         return f"ERROR: {e}"
 
-
 def run_nmap_os(ip):
-    """Intenta detección de OS (requiere sudo)."""
     cmd = f"sudo nmap -O --osscan-guess {ip} 2>/dev/null | grep -i 'os\\|running'"
     try:
         result = subprocess.run(
@@ -64,14 +43,7 @@ def run_nmap_os(ip):
     except:
         return "No detectado (requiere sudo)"
 
-
-# ─── IA: parsear output de nmap ──────────────────────────────────────────────
-
 def parsear_nmap_con_ia(ip, nmap_output):
-    """
-    Le pasa el output de nmap a la IA para que lo convierta a JSON estructurado.
-    Incluye análisis de firewall, IDS y configuración de seguridad.
-    """
     prompt = f"""Analiza este output de nmap y devuelve SOLO un JSON válido con esta estructura exacta:
 {{
   "ip": "{ip}",
@@ -123,15 +95,11 @@ Responde SOLO con el JSON, sin texto adicional ni markdown."""
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
-        # Fallback: parseo manual básico
         return parsear_nmap_manual(ip, nmap_output)
 
-
 def parsear_nmap_manual(ip, nmap_output):
-    """Parseo de respaldo si la IA falla."""
     services = []
     for line in nmap_output.splitlines():
-        # Línea típica: "80/tcp   open  http    nginx 1.18.0"
         match = re.match(r"(\d+)/(tcp|udp)\s+open\s+(\S+)\s*(.*)", line)
         if match:
             services.append({
@@ -148,13 +116,9 @@ def parsear_nmap_manual(ip, nmap_output):
         "resumen": f"{len(services)} puertos abiertos encontrados"
     }
 
-
-# ─── Agente principal ────────────────────────────────────────────────────────
-
 def run_agent():
     print(f"\n🖧 Agente 2 — Network Exposure")
 
-    # 1. Leer IP del Agente 1
     ag1_path = os.path.join(
         os.path.dirname(__file__), "..", "shared_data", "ag1.json"
     )
@@ -170,7 +134,6 @@ def run_agent():
         target = ag1.get("target", ip)
         print(f"   Leyó ag1.json → IP: {ip}")
 
-    # 2. Correr nmap
     nmap_output = run_nmap(ip)
 
     if "ERROR" in nmap_output or "TIMEOUT" in nmap_output:
@@ -178,11 +141,9 @@ def run_agent():
         print("   Generando resultado vacío...")
         parsed = {"ip": ip, "puertos_abiertos": [], "os_detected": "Error", "resumen": nmap_output}
     else:
-        # 3. Parsear con IA
         print("   🤖 Parseando output con IA...")
         parsed = parsear_nmap_con_ia(ip, nmap_output)
 
-    # 4. Construir JSON de salida
     resultado = {
         "target": target,
         "ip": ip,
@@ -200,7 +161,6 @@ def run_agent():
         "timestamp": datetime.now(UTC).isoformat()    
      }
 
-    # 5. Guardar
     output_path = os.path.join(
         os.path.dirname(__file__), "..", "shared_data", "ag2.json"
     )
@@ -213,19 +173,16 @@ def run_agent():
     print(f"      OS: {resultado['os_detected']}")
     print(f"      Puertos abiertos: {len(resultado['services'])}")
     
-    # Mostrar firewall/IDS detection
     fw_data = resultado.get('firewall_ids_detection', {})
     if fw_data.get('firewall_present'):
         print(f"      🔥 Firewall detectado: {fw_data.get('evidence', 'Sí')}")
     if fw_data.get('ids_ips_detected'):
         print(f"      🚨 IDS/IPS detectado")
     
-    # Mostrar servicios SSL/TLS
     ssl_services = resultado.get('ssl_tls_services', [])
     if ssl_services:
         print(f"      🔐 Servicios SSL/TLS: {len(ssl_services)}")
     
-    # Mostrar issues de seguridad
     issues = resultado.get('security_issues', [])
     if issues:
         print(f"      ⚠️ Issues de seguridad: {len(issues)}")
@@ -236,7 +193,6 @@ def run_agent():
         print(f"        ... y {len(resultado['services'])-5} más")
 
     return resultado
-
 
 if __name__ == "__main__":
     run_agent()

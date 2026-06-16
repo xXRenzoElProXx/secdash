@@ -1,15 +1,3 @@
-"""
-AGENTE 7 — CVE Intelligence
-Integrante 3
-
-Lee shared_data/ag2.json, toma los servicios/versiones detectados
-por el Agente 2 y genera shared_data/ag7.json con posibles CVEs.
-
-Modo:
-- Si USE_REAL_APIS=true en .env, intenta consultar NVD.
-- Si no, genera datos demostrativos para que el dashboard funcione.
-"""
-
 import json
 import os
 import re
@@ -20,18 +8,29 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-USE_REAL_APIS = os.getenv("USE_REAL_APIS", "false").lower() == "true"
+USE_REAL_APIS = os.getenv("USE_REAL_APIS", "true").lower() == "true"
 NVD_API_KEY = os.getenv("NVD_API_KEY", "")
 REQUEST_TIMEOUT = 20
 
+USE_AI_ANALYSIS = False  # Temporalmente deshabilitado por errores de parsing
+
+if USE_AI_ANALYSIS:
+    try:
+        from openai import OpenAI
+        ai_client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+        AI_MODEL = "gpt-oss:20b-cloud"
+        AI_AVAILABLE = True
+    except ImportError:
+        print("⚠️ OpenAI no disponible.")
+        AI_AVAILABLE = False
+else:
+    AI_AVAILABLE = False
 
 def root_path():
     return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-
 def shared_path(filename):
     return os.path.join(root_path(), "shared_data", filename)
-
 
 def leer_json(path, default=None):
     if default is None:
@@ -46,18 +45,82 @@ def leer_json(path, default=None):
         print(f"⚠ El archivo {path} no tiene JSON válido")
         return default
 
-
 def guardar_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-
 
 def limpiar_texto(texto):
     texto = str(texto or "").strip()
     texto = re.sub(r"\s+", " ", texto)
     return texto
 
+def ai_analyze_cve(cve_data: dict) -> dict:
+    if not AI_AVAILABLE:
+        return {}
+    
+    try:
+        cve_id = cve_data.get("id", "")
+        description = cve_data.get("descripcion", "")
+        cvss_score = cve_data.get("cvss_score", 0)
+        servicio = cve_data.get("servicio_afectado", "")
+        
+        prompt = f"""Analiza este CVE:
+
+CVE ID: {cve_id}
+DESCRIPCIÓN: {description}
+CVSS SCORE: {cvss_score}
+SERVICIO: {servicio}
+
+Responde en JSON con:
+1. "contexto_amenaza": Tipo de vulnerabilidad (2-3 líneas)
+2. "explotabilidad": BAJA/MEDIA/ALTA
+3. "impacto_organizacional": Riesgo específico
+4. "indicadores_compromiso": Qué buscar si fue explotado
+5. "prioridad_parcheo": INMEDIATA/ALTA/MEDIA/BAJA con justificación
+6. "recursos_defensa": Herramientas para detectar/prevenir
+7. "contexto_apt": Relación con grupos APT
+
+Responde SOLO en JSON válido.
+"""
+        
+        response = ai_client.chat.completions.create(
+            model=AI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=700,
+            temperature=0.2
+        )
+        
+        analysis_text = response.choices[0].message.content.strip()
+        
+        if not analysis_text:
+            raise ValueError("Respuesta vacía de la IA")
+        
+        # Limpiar markdown
+        if analysis_text.startswith('```'):
+            analysis_text = analysis_text.replace('```json', '').replace('```', '').strip()
+        
+        # Intentar parsear JSON
+        parsed = json.loads(analysis_text)
+        
+        # Validar que tenga las claves esperadas
+        if not isinstance(parsed, dict):
+            raise ValueError("Respuesta no es un diccionario")
+        
+        return parsed
+        
+    except Exception as e:
+        print(f"⚠️ Error en análisis IA: {e}")
+        return {
+            "contexto_amenaza": "Análisis IA no disponible",
+            "explotabilidad": "REVISAR_MANUAL",
+            "impacto_organizacional": "Requiere evaluación manual",
+            "indicadores_compromiso": ["Logs de aplicación", "Tráfico anómalo"],
+            "prioridad_parcheo": "EVALUAR",
+            "recursos_defensa": ["Consultar MITRE ATT&CK"],
+            "contexto_apt": "No determinado",
+            "ia_error": str(e)
+        }
 
 def construir_query_servicio(servicio):
     """
@@ -79,7 +142,6 @@ def construir_query_servicio(servicio):
         return service
 
     return ""
-
 
 def extraer_cvss_y_severidad(cve_item):
     """
@@ -117,10 +179,10 @@ def extraer_cvss_y_severidad(cve_item):
 
     return 0, "UNKNOWN", cvss_detail
 
-
 def buscar_cves_nvd(query, service_info):
     """
     Consulta NVD si USE_REAL_APIS=true.
+    Si no hay API key, funciona en modo sin autenticación (rate limitado).
     Incluye análisis de vulnerabilidades día cero y supply chain.
     """
     if not USE_REAL_APIS:
@@ -138,6 +200,9 @@ def buscar_cves_nvd(query, service_info):
     headers = {}
     if NVD_API_KEY:
         headers["apiKey"] = NVD_API_KEY
+        print(f"      ✓ Usando API key de NVD")
+    else:
+        print(f"      ⚠️  Sin API key NVD - modo rate limitado (puede ser lento)")
 
     try:
         response = requests.get(
@@ -192,7 +257,6 @@ def buscar_cves_nvd(query, service_info):
         })
 
     return resultados
-
 
 def cves_mock_para_demo(services):
     """
@@ -303,7 +367,6 @@ def cves_mock_para_demo(services):
 
     return cves
 
-
 def run_agent():
     print("\n🧬 Agente 7 — CVE Intelligence")
 
@@ -322,6 +385,8 @@ def run_agent():
 
     if USE_REAL_APIS:
         print(" Modo real activo: consultando NVD...")
+        if not NVD_API_KEY:
+            print(" ⚠️  Sin NVD_API_KEY - consultando sin autenticación (rate limitado)")
         for s in services:
             query = construir_query_servicio(s)
             if not query:
@@ -332,14 +397,25 @@ def run_agent():
         print(" Modo demo activo: generando CVEs simulados para pruebas.")
         cves_encontrados = cves_mock_para_demo(services)
 
+    if AI_AVAILABLE and USE_AI_ANALYSIS and cves_encontrados:
+        print("🤖 Aplicando análisis IA...")
+        for cve in cves_encontrados:
+            ai_analysis = ai_analyze_cve(cve)
+            if ai_analysis:
+                cve["inteligencia_ia"] = ai_analysis
+        print(f"✅ {len(cves_encontrados)} CVEs procesados")
+
     resultado = {
         "agent": "AG7_CVE_INTELLIGENCE",
         "integrante": 3,
         "target": target,
         "ip": ip,
-        "modo": "real_nvd" if USE_REAL_APIS else "mock_demo",
+        "modo": "real_nvd" if USE_REAL_APIS else "demo",
+        "api_key_configurada": bool(NVD_API_KEY) if USE_REAL_APIS else False,
         "cves_encontrados": cves_encontrados,
         "total_cves": len(cves_encontrados),
+        "ia_habilitada": AI_AVAILABLE and USE_AI_ANALYSIS,
+        "modelo_ia": AI_MODEL if AI_AVAILABLE else None,
         "analisis_cvss": {
             "critical": sum(1 for c in cves_encontrados if c.get("severidad") == "CRITICAL"),
             "high": sum(1 for c in cves_encontrados if c.get("severidad") == "HIGH"),
@@ -354,7 +430,7 @@ def run_agent():
             "supply_chain_ids": [c["cve_id"] for c in cves_encontrados if c.get("is_supply_chain", False)]
         },
         "timestamp": datetime.now(UTC).isoformat(),
-        "nota": "MOCK indica dato demostrativo. CVSS detail incluye Base/Exploitability/Impact scores. Zero-day y Supply chain identificados."
+        "nota": "Modo REAL activado. Sin API key NVD se usan consultas rate-limitadas. Sin API key AbuseIPDB se usa análisis local. Para modo demo, establecer USE_REAL_APIS=false en .env"
     }
 
     output_path = shared_path("ag7.json")
@@ -364,7 +440,6 @@ def run_agent():
     print(f" CVEs registrados: {len(cves_encontrados)}")
 
     return resultado
-
 
 if __name__ == "__main__":
     run_agent()

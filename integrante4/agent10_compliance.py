@@ -1,33 +1,12 @@
-"""
-AGENTE 10 — Compliance Agent (EXPANDIDO)
-Integrante 4
-
-Qué hace:
-  Lee ag6.json (OWASP), ag7.json (CVE), ag9.json (riesgo) y mapea los hallazgos
-  a controles normativos multi-framework:
-  - OWASP Top 10 2021
-  - NIST 800-53 Rev 5
-  - CIS Controls v8
-  - ISO 27001:2022
-  - PCI-DSS 4.0
-  - GDPR/RGPD
-  - SOC 2 Type II
-  
-  Incluye: generación de evidencias, excepciones, controles compensatorios
-
-Salida: shared_data/ag10.json
-"""
-
 import json
 import os
 import re
 from datetime import datetime, UTC
 from openai import OpenAI
 
-# ─── Configuración IA ───────────────────────────────────────────────────────
 try:
     ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-    AI_MODEL = "minimax-m3:cloud"  # Unificado para todos los integrantes
+    AI_MODEL = "ministral-3:14b-cloud"  # Integrante 4
     # Test de conexión
     ai.models.list()
     print("   ✓ Ollama conectado")
@@ -36,8 +15,6 @@ except Exception as e:
     print(f"   ⚠️  IA no disponible: {e}")
     print("   ℹ️  Continuando con análisis básico...")
     ai_available = False
-
-# ─── Helpers ────────────────────────────────────────────────────────────────
 
 def load_json(filename):
     """Carga un JSON desde shared_data/"""
@@ -52,9 +29,8 @@ def load_json(filename):
         print(f"   ❌ Error leyendo {filename}: {e}")
         return None
 
-
 def mapear_a_controles_ia(hallazgos_owasp, nivel_riesgo):
-    """Usa IA para mapear hallazgos a controles NIST y CIS"""
+    
     if not ai_available:
         return analisis_basico(hallazgos_owasp, nivel_riesgo)
     
@@ -105,7 +81,6 @@ Responde SOLO con el JSON, sin markdown ni texto adicional."""
     except Exception as e:
         print(f"   ⚠️  Error en análisis IA: {e}")
         return analisis_basico(hallazgos_owasp, nivel_riesgo)
-
 
 def analisis_basico(hallazgos_owasp, nivel_riesgo, ag7_data=None):
     """Análisis básico multi-framework sin IA"""
@@ -416,14 +391,10 @@ def analisis_basico(hallazgos_owasp, nivel_riesgo, ag7_data=None):
         "controles_compensatorios": controles_compensatorios
     }
 
-
-# ─── Agente principal ────────────────────────────────────────────────────────
-
 def run_agent():
     print(f"\n🛡️ Agente 10 — Compliance Agent (Multi-Framework)")
     print("   Analizando cumplimiento normativo...\n")
 
-    # 1. Cargar datos de entrada
     print("   [1/4] Cargando ag6.json (OWASP)...")
     ag6 = load_json("ag6.json")
     if not ag6:
@@ -448,7 +419,6 @@ def run_agent():
         nivel_riesgo = ag9.get("nivel", "medio").lower()
         print(f"         Nivel de riesgo: {nivel_riesgo}")
 
-    # 2. Mapear a controles normativos
     print("\n   [4/4] Mapeando a controles multi-framework...")
     print("         Frameworks: NIST 800-53, CIS, ISO 27001, PCI-DSS, GDPR, SOC 2")
     
@@ -459,7 +429,6 @@ def run_agent():
     
     resultado = analisis_basico(hallazgos_owasp, nivel_riesgo, ag7)
 
-    # 3. Agregar metadata y evidencias
     resultado["agent"] = "AG10_COMPLIANCE"
     resultado["integrante"] = 4
     resultado["timestamp"] = datetime.now(UTC).isoformat()
@@ -475,7 +444,6 @@ def run_agent():
         "hash_ag9": "SHA256:mock_hash_ag9" if ag9 else None
     }
     
-    # 4. Guardar resultado
     output_path = os.path.join(
         os.path.dirname(__file__), "..", "shared_data", "ag10.json"
     )
@@ -496,9 +464,6 @@ def run_agent():
         print(f"      Controles compensatorios: {len(resultado['controles_compensatorios'])}")
 
     return resultado
-
-
-# ─── Entry point ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     try:

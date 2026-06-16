@@ -1,21 +1,3 @@
-"""
-AGENTE 9 — Risk Correlation
-Integrante 3
-
-Lee los JSON de agentes previos y calcula un score de riesgo 0-100.
-
-Entradas esperadas:
-- shared_data/ag2.json  -> servicios expuestos
-- shared_data/ag4.json  -> hallazgos web básicos
-- shared_data/ag5.json  -> hallazgos web avanzados
-- shared_data/ag6.json  -> clasificación OWASP / heatmap
-- shared_data/ag7.json  -> CVEs encontrados
-- shared_data/ag8.json  -> Threat Intelligence / IOCs
-
-Salida:
-- shared_data/ag9.json
-"""
-
 import json
 import os
 from datetime import datetime, UTC
@@ -26,21 +8,18 @@ from openai import OpenAI
 load_dotenv()
 
 USE_OLLAMA = True
-AI_MODEL = "minimax-m3:cloud"  # Unificado para todos los integrantes
+AI_MODEL = "gpt-oss:20b-cloud"  # Integrante 3
 
 if USE_OLLAMA:
     ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
 else:
     ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-
 def root_path():
     return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-
 def shared_path(filename):
     return os.path.join(root_path(), "shared_data", filename)
-
 
 def leer_json(path, default=None):
     if default is None:
@@ -55,17 +34,14 @@ def leer_json(path, default=None):
         print(f"⚠ El archivo {path} no tiene JSON válido")
         return default
 
-
 def guardar_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-
 def normalizar_severidad(valor):
     return str(valor or "").strip().lower()
-
 
 def puntos_por_severidad(sev):
     sev = normalizar_severidad(sev)
@@ -80,7 +56,6 @@ def puntos_por_severidad(sev):
         return 3
 
     return 5
-
 
 def calcular_riesgo_red(ag2):
     services = ag2.get("services", [])
@@ -107,7 +82,6 @@ def calcular_riesgo_red(ag2):
 
     return min(puntos, 25), factores
 
-
 def obtener_hallazgos_web(ag4, ag5):
     hallazgos = []
 
@@ -118,7 +92,6 @@ def obtener_hallazgos_web(ag4, ag5):
         hallazgos.extend(ag5.get("hallazgos", []))
 
     return hallazgos
-
 
 def calcular_riesgo_web(ag4, ag5, ag6):
     hallazgos = obtener_hallazgos_web(ag4, ag5)
@@ -145,7 +118,6 @@ def calcular_riesgo_web(ag4, ag5, ag6):
     puntos += puntos_owasp
 
     return min(puntos, 30), factores
-
 
 def calcular_riesgo_cves(ag7):
     cves = ag7.get("cves_encontrados", [])
@@ -179,7 +151,6 @@ def calcular_riesgo_cves(ag7):
 
     return min(puntos, 35), factores
 
-
 def calcular_riesgo_threat_intel(ag8):
     iocs = ag8.get("iocs", [])
     puntos = 0
@@ -204,7 +175,6 @@ def calcular_riesgo_threat_intel(ag8):
 
     return min(puntos, 25), factores
 
-
 def nivel_por_score(score):
     if score >= 81:
         return "CRITICO"
@@ -213,7 +183,6 @@ def nivel_por_score(score):
     if score >= 31:
         return "MEDIO"
     return "BAJO"
-
 
 def recomendacion_por_nivel(nivel, fuentes_faltantes):
     if nivel == "CRITICO":
@@ -229,7 +198,7 @@ def recomendacion_por_nivel(nivel, fuentes_faltantes):
 def generar_analisis_ia(target, ip, score_total, nivel, desglose, factores_criticos, fuentes_faltantes):
     """
     Usa el mismo estilo del Agente 2:
-    Ollama con endpoint compatible OpenAI y modelo minimax-m3:cloud (unificado).
+    Ollama con endpoint compatible OpenAI y modelo gpt-oss:20b-cloud (Integrante 3).
     Si falla, devuelve un análisis de respaldo para no romper el agente.
     """
 
@@ -372,7 +341,6 @@ def run_agent():
         print(f" ⚠ Fuentes faltantes: {', '.join(fuentes_faltantes)}")
 
     return resultado
-
 
 if __name__ == "__main__":
     run_agent()

@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""
-Agente 05 - Template Scanner
-Ejecuta Nuclei sobre una URL autorizada y genera shared_data/ag5.json.
-
-Uso seguro:
-  python3 agent5_nuclei.py --url http://TU-LAB --i-have-permission
-  python3 agent5_nuclei.py --from-file nuclei_out.jsonl
-  python3 agent5_nuclei.py --mock
-"""
 
 import argparse
 import json
@@ -20,18 +11,32 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+USE_AI_ANALYSIS = True
+
+if USE_AI_ANALYSIS:
+    try:
+        from openai import OpenAI
+        ai_client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+        AI_MODEL = "gemma4:31b-cloud"
+        AI_AVAILABLE = True
+    except ImportError:
+        print("⚠️ OpenAI no disponible. Análisis básico.")
+        AI_AVAILABLE = False
+else:
+    AI_AVAILABLE = False
 
 DEFAULT_OUTPUT = Path("shared_data/ag5.json")
-
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-
 def ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-
 
 def validate_url(url: str) -> str:
     parsed = urlparse(url)
@@ -39,13 +44,11 @@ def validate_url(url: str) -> str:
         raise ValueError("La URL debe empezar con http:// o https:// y tener dominio/IP.")
     return url.rstrip("/")
 
-
 def first_value(d: Dict[str, Any], keys: List[str]) -> Optional[Any]:
     for k in keys:
         if k in d and d[k] not in (None, "", []):
             return d[k]
     return None
-
 
 def extract_cve(item: Dict[str, Any]) -> Optional[str]:
     info = item.get("info") if isinstance(item.get("info"), dict) else {}
@@ -66,6 +69,58 @@ def extract_cve(item: Dict[str, Any]) -> Optional[str]:
     match = re.search(r"CVE-\d{4}-\d{4,7}", text, re.IGNORECASE)
     return match.group(0).upper() if match else None
 
+def ai_analyze_nuclei_finding(finding_data: Dict[str, Any]) -> Dict[str, Any]:
+    if not AI_AVAILABLE:
+        return {}
+    
+    try:
+        template = finding_data.get("template", "")
+        description = finding_data.get("descripcion", "")
+        severity = finding_data.get("severidad", "")
+        cve = finding_data.get("cve_id", "")
+        
+        prompt = f"""Analiza este hallazgo de Nuclei:
+
+TEMPLATE: {template}
+DESCRIPCIÓN: {description}
+SEVERIDAD: {severity}
+CVE: {cve}
+
+Responde en formato JSON con:
+1. "explicacion_tecnica": Qué hace este template/ataque (2-3 líneas)
+2. "vectores_ataque": Posibles formas de explotación
+3. "impacto_negocio": Riesgo para la organización
+4. "pasos_remediacion": Acciones específicas
+5. "recursos_adicionales": Links o herramientas
+6. "categoria_ataque": Tipo (XSS, SQLi, RCE, etc.)
+
+Responde SOLO en JSON válido.
+"""
+        
+        response = ai_client.chat.completions.create(
+            model=AI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=600,
+            temperature=0.3
+        )
+        
+        analysis_text = response.choices[0].message.content.strip()
+        if analysis_text.startswith('```json'):
+            analysis_text = analysis_text.replace('```json', '').replace('```', '').strip()
+        
+        return json.loads(analysis_text)
+        
+    except Exception as e:
+        print(f"⚠️ Error en análisis IA: {e}")
+        return {
+            "explicacion_tecnica": "Análisis IA no disponible",
+            "vectores_ataque": ["Evaluación manual requerida"],
+            "impacto_negocio": "Requiere análisis manual",
+            "pasos_remediacion": ["Consultar documentación"],
+            "recursos_adicionales": [],
+            "categoria_ataque": "DESCONOCIDO",
+            "ia_error": str(e)
+        }
 
 def normalize_nuclei_item(item: Dict[str, Any], idx: int) -> Dict[str, Any]:
     info = item.get("info") if isinstance(item.get("info"), dict) else {}
@@ -92,7 +147,6 @@ def normalize_nuclei_item(item: Dict[str, Any], idx: int) -> Dict[str, Any]:
             "extracted_results": item.get("extracted-results"),
         },
     }
-
 
 def parse_nuclei_file(path: Path) -> List[Dict[str, Any]]:
     raw = path.read_text(encoding="utf-8", errors="ignore")
@@ -128,14 +182,12 @@ def parse_nuclei_file(path: Path) -> List[Dict[str, Any]]:
 
     return []
 
-
 def run_nuclei(url: str, severities: str, timeout: int) -> Path:
     if not shutil.which("nuclei"):
         raise RuntimeError("Nuclei no está instalado o no está en PATH. Instálalo y ejecuta: nuclei -update-templates")
 
     tmp = Path(tempfile.gettempdir()) / f"nuclei_out_{abs(hash(url))}.jsonl"
 
-    # En versiones nuevas se recomienda JSONL. Si falla, reintentamos con -json por compatibilidad.
     commands = [
         ["nuclei", "-u", url, "-severity", severities, "-jsonl", "-o", str(tmp), "-silent"],
         ["nuclei", "-u", url, "-severity", severities, "-json", "-o", str(tmp), "-silent"],
@@ -157,8 +209,15 @@ def run_nuclei(url: str, severities: str, timeout: int) -> Path:
 
     raise RuntimeError("Nuclei falló y no generó salida.\n" + last_error)
 
-
 def build_result(url: str, hallazgos: List[Dict[str, Any]], mode: str) -> Dict[str, Any]:
+    if AI_AVAILABLE and USE_AI_ANALYSIS:
+        print("🤖 Aplicando análisis IA...")
+        for hallazgo in hallazgos:
+            ai_analysis = ai_analyze_nuclei_finding(hallazgo)
+            if ai_analysis:
+                hallazgo["analisis_ia"] = ai_analysis
+        print(f"✅ {len(hallazgos)} hallazgos procesados")
+    
     return {
         "agente": "Agente 05 - Template Scanner",
         "url_escaneada": url,
@@ -166,20 +225,20 @@ def build_result(url: str, hallazgos: List[Dict[str, Any]], mode: str) -> Dict[s
         "modo": mode,
         "hallazgos": hallazgos,
         "total_hallazgos": len(hallazgos),
+        "ia_habilitada": AI_AVAILABLE and USE_AI_ANALYSIS,
+        "modelo_ia": AI_MODEL if AI_AVAILABLE else None,
         "timestamp": now_iso(),
     }
 
-
 def mock_result() -> Dict[str, Any]:
-    # Leer la IP desde ag1.json del Integrante 1
     try:
         with open("shared_data/ag1.json", "r") as f:
             data = json.load(f)
-            ip = data.get("ip", "142.251.0.139")  # IP de google.com como fallback
+            ip = data.get("ip", "142.251.0.139")
     except (FileNotFoundError, json.JSONDecodeError):
-        ip = "142.251.0.139"  # IP de google.com por defecto si no se puede leer ag1.json
+        ip = "142.251.0.139"
     
-    url = f"http://{ip}"  # Usando HTTP, puedes cambiar a HTTPS si prefieres
+    url = f"http://{ip}"
     
     hallazgos = [
         {
@@ -203,7 +262,6 @@ def mock_result() -> Dict[str, Any]:
     ]
     return build_result(url, hallazgos, "mock")
 
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="Agente 05 - Nuclei a JSON normalizado")
     parser.add_argument("--url", help="URL autorizada a escanear. Ejemplo: http://lab.local")
@@ -222,15 +280,38 @@ def main() -> int:
         result = mock_result()
     else:
         if not args.url:
-            parser.error("Debes usar --url o --mock.")
-        url = validate_url(args.url)
+            try:
+                with open("shared_data/ag1.json", "r") as f:
+                    data = json.load(f)
+                    ip = data.get("ip", None)
+                    target = data.get("target", None)
+                    
+                    if ip and ip != "desconocida":
+                        url = f"http://{ip}"
+                        print(f"[Agente 5] 🎯 Usando target de ag1.json: {url}")
+                    elif target:
+                        url = f"http://{target}"
+                        print(f"[Agente 5] 🎯 Usando target de ag1.json: {url}")
+                    else:
+                        parser.error("No se encontró target válido en ag1.json. Usa --url o --mock.")
+            except (FileNotFoundError, json.JSONDecodeError):
+                parser.error("No se encontró ag1.json. Debes usar --url o --mock.")
+        else:
+            url = args.url
+        
+        url = validate_url(url)
 
         if args.from_file:
             hallazgos = parse_nuclei_file(Path(args.from_file))
             result = build_result(url, hallazgos, "from_file")
         else:
             if not args.i_have_permission:
-                parser.error("Para ejecutar Nuclei debes agregar --i-have-permission y usar solo objetivos autorizados/laboratorio.")
+                print("[Agente 5] ⚠️ ADVERTENCIA: Ejecutando escaneo REAL sin flag --i-have-permission")
+                print("[Agente 5] ⚠️ Solo usa este agente en objetivos autorizados o laboratorios propios")
+                print("[Agente 5] ⚠️ Continuando en 3 segundos...")
+                import time
+                time.sleep(3)
+            
             nuclei_file = run_nuclei(url, args.severity, args.timeout)
             hallazgos = parse_nuclei_file(nuclei_file)
             result = build_result(url, hallazgos, "scan")
@@ -238,7 +319,6 @@ def main() -> int:
     output.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[Agente 5] OK -> {output} ({result['total_hallazgos']} hallazgos)")
     return 0
-
 
 if __name__ == "__main__":
     try:

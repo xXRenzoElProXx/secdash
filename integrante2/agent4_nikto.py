@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""
-Agente 04 - Web Vulnerability
-Ejecuta Nikto sobre una URL autorizada y genera shared_data/ag4.json.
-
-Uso seguro:
-  python3 agent4_nikto.py --url http://TU-LAB --i-have-permission
-  python3 agent4_nikto.py --from-file nikto_out.json
-  python3 agent4_nikto.py --mock
-"""
 
 import argparse
 import json
@@ -20,18 +11,32 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+USE_AI_ANALYSIS = True
+
+if USE_AI_ANALYSIS:
+    try:
+        from openai import OpenAI
+        ai_client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+        AI_MODEL = "gemma4:31b-cloud"
+        AI_AVAILABLE = True
+    except ImportError:
+        print("⚠️ OpenAI no disponible. Análisis básico.")
+        AI_AVAILABLE = False
+else:
+    AI_AVAILABLE = False
 
 DEFAULT_OUTPUT = Path("shared_data/ag4.json")
-
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-
 def ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-
 
 def validate_url(url: str) -> str:
     parsed = urlparse(url)
@@ -39,9 +44,7 @@ def validate_url(url: str) -> str:
         raise ValueError("La URL debe empezar con http:// o https:// y tener dominio/IP.")
     return url.rstrip("/")
 
-
 def severity_from_text(text: str) -> str:
-    """Nikto no siempre entrega severidad; usamos una heurística simple y explicable."""
     t = text.lower()
     high_words = [
         "sql injection", "command injection", "remote code", "rce",
@@ -64,13 +67,57 @@ def severity_from_text(text: str) -> str:
         return "LOW"
     return "LOW"
 
+def ai_analyze_vulnerability(vulnerability_data: Dict[str, Any]) -> Dict[str, Any]:
+    if not AI_AVAILABLE:
+        return {}
+    
+    try:
+        vulnerability_text = vulnerability_data.get("description", "")
+        url = vulnerability_data.get("url", "")
+        
+        prompt = f"""Analiza esta vulnerabilidad web de Nikto:
+
+VULNERABILIDAD: {vulnerability_text}
+URL: {url}
+
+Responde en formato JSON con:
+1. "contexto_tecnico": Explicación técnica (2-3 líneas)
+2. "impacto_potencial": Consecuencias de explotación
+3. "mitigacion_recomendada": Pasos para solucionar
+4. "prioridad_correccion": CRÍTICA/ALTA/MEDIA/BAJA
+5. "categoria_cwe": Número CWE si aplica
+
+Responde SOLO en JSON válido.
+"""
+        
+        response = ai_client.chat.completions.create(
+            model=AI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=500,
+            temperature=0.3
+        )
+        
+        analysis_text = response.choices[0].message.content.strip()
+        if analysis_text.startswith('```json'):
+            analysis_text = analysis_text.replace('```json', '').replace('```', '').strip()
+        
+        return json.loads(analysis_text)
+        
+    except Exception as e:
+        print(f"⚠️ Error en análisis IA: {e}")
+        return {
+            "contexto_tecnico": "Análisis IA no disponible",
+            "impacto_potencial": "Evaluación manual requerida",
+            "mitigacion_recomendada": "Consultar documentación",
+            "prioridad_correccion": "REVISAR",
+            "ia_error": str(e)
+        }
 
 def first_value(d: Dict[str, Any], keys: List[str]) -> Optional[Any]:
     for k in keys:
         if k in d and d[k] not in (None, "", []):
             return d[k]
     return None
-
 
 def collect_dicts(obj: Any) -> List[Dict[str, Any]]:
     found: List[Dict[str, Any]] = []
@@ -86,7 +133,6 @@ def collect_dicts(obj: Any) -> List[Dict[str, Any]]:
         for item in obj:
             found.extend(collect_dicts(item))
     return found
-
 
 def normalize_nikto_json(data: Any, url: str) -> List[Dict[str, Any]]:
     raw_items = collect_dicts(data)
@@ -124,7 +170,6 @@ def normalize_nikto_json(data: Any, url: str) -> List[Dict[str, Any]]:
             h["id"] = f"NIKTO-{i:03d}"
     return hallazgos
 
-
 def normalize_nikto_text(text: str, url: str) -> List[Dict[str, Any]]:
     hallazgos: List[Dict[str, Any]] = []
     for line in text.splitlines():
@@ -150,7 +195,6 @@ def normalize_nikto_text(text: str, url: str) -> List[Dict[str, Any]]:
         })
     return hallazgos
 
-
 def parse_nikto_file(path: Path, url: str) -> List[Dict[str, Any]]:
     raw = path.read_text(encoding="utf-8", errors="ignore")
     try:
@@ -161,7 +205,6 @@ def parse_nikto_file(path: Path, url: str) -> List[Dict[str, Any]]:
     except json.JSONDecodeError:
         pass
     return normalize_nikto_text(raw, url)
-
 
 def run_nikto(url: str, timeout: int) -> Path:
     if not shutil.which("nikto"):
@@ -180,7 +223,6 @@ def run_nikto(url: str, timeout: int) -> Path:
     )
 
     if completed.returncode not in (0, 1):
-        # Nikto puede devolver 1 aunque haya generado resultados; por eso solo fallamos si no hay archivo.
         if not tmp.exists():
             raise RuntimeError(
                 "Nikto falló y no generó salida.\n"
@@ -188,13 +230,19 @@ def run_nikto(url: str, timeout: int) -> Path:
             )
 
     if not tmp.exists():
-        # Fallback: guardar stdout como texto para parsearlo
         tmp = Path(tempfile.gettempdir()) / f"nikto_out_{abs(hash(url))}.txt"
         tmp.write_text(completed.stdout, encoding="utf-8")
     return tmp
 
-
 def build_result(url: str, hallazgos: List[Dict[str, Any]], mode: str) -> Dict[str, Any]:
+    if AI_AVAILABLE and USE_AI_ANALYSIS:
+        print("🤖 Aplicando análisis IA...")
+        for hallazgo in hallazgos:
+            ai_analysis = ai_analyze_vulnerability(hallazgo)
+            if ai_analysis:
+                hallazgo["analisis_ia"] = ai_analysis
+        print(f"✅ {len(hallazgos)} hallazgos procesados")
+    
     return {
         "agente": "Agente 04 - Web Vulnerability",
         "url_escaneada": url,
@@ -202,21 +250,21 @@ def build_result(url: str, hallazgos: List[Dict[str, Any]], mode: str) -> Dict[s
         "modo": mode,
         "hallazgos": hallazgos,
         "total_hallazgos": len(hallazgos),
+        "ia_habilitada": AI_AVAILABLE and USE_AI_ANALYSIS,
+        "modelo_ia": AI_MODEL if AI_AVAILABLE else None,
         "nota": "Severidad estimada por heurística porque Nikto no siempre entrega severidad normalizada.",
         "timestamp": now_iso(),
     }
 
-
 def mock_result() -> Dict[str, Any]:
-    # Leer la IP desde ag1.json del Integrante 1
     try:
         with open("shared_data/ag1.json", "r") as f:
             data = json.load(f)
-            ip = data.get("ip", "142.251.0.139")  # IP de google.com como fallback
+            ip = data.get("ip", "142.251.0.139")
     except (FileNotFoundError, json.JSONDecodeError):
-        ip = "142.251.0.139"  # IP de google.com por defecto si no se puede leer ag1.json
+        ip = "142.251.0.139"
     
-    url = f"http://{ip}"  # Usando HTTP, puedes cambiar a HTTPS si prefieres
+    url = f"http://{ip}"
     
     hallazgos = [
         {
@@ -236,7 +284,6 @@ def mock_result() -> Dict[str, Any]:
     ]
     return build_result(url, hallazgos, "mock")
 
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="Agente 04 - Nikto a JSON normalizado")
     parser.add_argument("--url", help="URL autorizada a escanear. Ejemplo: http://lab.local")
@@ -254,15 +301,38 @@ def main() -> int:
         result = mock_result()
     else:
         if not args.url:
-            parser.error("Debes usar --url o --mock.")
-        url = validate_url(args.url)
+            try:
+                with open("shared_data/ag1.json", "r") as f:
+                    data = json.load(f)
+                    ip = data.get("ip", None)
+                    target = data.get("target", None)
+                    
+                    if ip and ip != "desconocida":
+                        url = f"http://{ip}"
+                        print(f"[Agente 4] 🎯 Usando target de ag1.json: {url}")
+                    elif target:
+                        url = f"http://{target}"
+                        print(f"[Agente 4] 🎯 Usando target de ag1.json: {url}")
+                    else:
+                        parser.error("No se encontró target válido en ag1.json. Usa --url o --mock.")
+            except (FileNotFoundError, json.JSONDecodeError):
+                parser.error("No se encontró ag1.json. Debes usar --url o --mock.")
+        else:
+            url = args.url
+        
+        url = validate_url(url)
 
         if args.from_file:
             hallazgos = parse_nikto_file(Path(args.from_file), url)
             result = build_result(url, hallazgos, "from_file")
         else:
             if not args.i_have_permission:
-                parser.error("Para ejecutar Nikto debes agregar --i-have-permission y usar solo objetivos autorizados/laboratorio.")
+                print("[Agente 4] ⚠️ ADVERTENCIA: Ejecutando escaneo REAL sin flag --i-have-permission")
+                print("[Agente 4] ⚠️ Solo usa este agente en objetivos autorizados o laboratorios propios")
+                print("[Agente 4] ⚠️ Continuando en 3 segundos...")
+                import time
+                time.sleep(3)
+            
             nikto_file = run_nikto(url, args.timeout)
             hallazgos = parse_nikto_file(nikto_file, url)
             result = build_result(url, hallazgos, "scan")
@@ -270,7 +340,6 @@ def main() -> int:
     output.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[Agente 4] OK -> {output} ({result['total_hallazgos']} hallazgos)")
     return 0
-
 
 if __name__ == "__main__":
     try:

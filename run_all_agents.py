@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-"""
-run_all_agents.py — Ejecuta todos los agentes del SecDash AI SOC en orden.
-
-Uso:
-    python run_all_agents.py example.com [--mock]
-    
-    --mock: Ejecuta agentes en modo demo sin herramientas reales
-"""
 
 import sys
 import os
@@ -20,7 +12,6 @@ def print_header(text):
     print("=" * 60)
 
 def run_command(cmd, description):
-    """Ejecuta un comando y muestra el progreso"""
     print(f"\n🔄 {description}...")
     try:
         result = subprocess.run(
@@ -59,9 +50,6 @@ def main():
     success_count = 0
     total_count = 0
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # INTEGRANTE 1: Discovery, Network, Surface
-    # ═══════════════════════════════════════════════════════════════════════
     print_header("INTEGRANTE 1: Asset Discovery & Network Analysis")
     
     agents_int1 = [
@@ -75,9 +63,6 @@ def main():
         if run_command(cmd, desc):
             success_count += 1
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # INTEGRANTE 2: Web Vulnerability Scanning
-    # ═══════════════════════════════════════════════════════════════════════
     if not args.skip_web:
         print_header("INTEGRANTE 2: Web Vulnerability Assessment")
         
@@ -94,9 +79,6 @@ def main():
     else:
         print_header("INTEGRANTE 2: Web Scans SKIPPED")
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # INTEGRANTE 3: CVE, Threat Intel, Risk Correlation
-    # ═══════════════════════════════════════════════════════════════════════
     print_header("INTEGRANTE 3: Intelligence & Risk Analysis")
     
     agents_int3 = [
@@ -110,14 +92,12 @@ def main():
         if run_command(cmd, desc):
             success_count += 1
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # INTEGRANTE 4: Compliance & Metasploit
-    # ═══════════════════════════════════════════════════════════════════════
-    print_header("INTEGRANTE 4: Compliance & Exploit Advisory")
+    print_header("INTEGRANTE 4: Compliance, Exploit Advisory & Security Chatbot")
     
     agents_int4 = [
         (["python", "integrante4/agent10_compliance.py"], "AG10 - Compliance Checker"),
         (["python", "integrante4/agent11_metasploit.py"], "AG11 - Metasploit Advisor"),
+        (["python", "integrante4/agent12_chatbot.py", "--generate-report"], "AG12 - Security Chatbot Report"),
     ]
     
     for cmd, desc in agents_int4:
@@ -125,9 +105,6 @@ def main():
         if run_command(cmd, desc):
             success_count += 1
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # RESUMEN FINAL
-    # ═══════════════════════════════════════════════════════════════════════
     print_header("📊 EXECUTION SUMMARY")
     print(f"   Total agents: {total_count}")
     print(f"   Successful: {success_count}")
@@ -136,9 +113,10 @@ def main():
     
     print("\n" + "=" * 60)
     print("  📁 Output files generated in shared_data/:")
-    print("     ag1.json - ag11.json")
+    print("     ag1.json - ag12.json")
     print("\n  🚀 Next steps:")
     print("     streamlit run dashboard.py")
+    print("     python integrante4/agent12_chatbot.py --interactive  # Chat interactivo")
     print("=" * 60)
     
     return 0 if success_count == total_count else 1
