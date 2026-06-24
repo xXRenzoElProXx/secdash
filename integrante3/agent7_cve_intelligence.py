@@ -17,8 +17,11 @@ USE_AI_ANALYSIS = False  # Temporalmente deshabilitado por errores de parsing
 if USE_AI_ANALYSIS:
     try:
         from openai import OpenAI
-        ai_client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-        AI_MODEL = "gpt-oss:20b-cloud"
+        ai_client = OpenAI(
+            base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+            api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
+        )
+        AI_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
         AI_AVAILABLE = True
     except ImportError:
         print("⚠️ OpenAI no disponible.")

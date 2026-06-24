@@ -8,10 +8,13 @@ from openai import OpenAI
 load_dotenv()
 
 USE_OLLAMA = True
-AI_MODEL = "gpt-oss:20b-cloud"  # Integrante 3
+AI_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
 
 if USE_OLLAMA:
-    ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+    ai = OpenAI(
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+        api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
+    )
 else:
     ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -198,7 +201,7 @@ def recomendacion_por_nivel(nivel, fuentes_faltantes):
 def generar_analisis_ia(target, ip, score_total, nivel, desglose, factores_criticos, fuentes_faltantes):
     """
     Usa el mismo estilo del Agente 2:
-    Ollama con endpoint compatible OpenAI y modelo gpt-oss:20b-cloud (Integrante 3).
+    Ollama con endpoint compatible OpenAI y modelo configurado por SECDASH_AI_MODEL (por defecto minimax-m3:cloud).
     Si falla, devuelve un análisis de respaldo para no romper el agente.
     """
 

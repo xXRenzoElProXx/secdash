@@ -7,15 +7,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 USE_OLLAMA = True
+AI_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
 
 if USE_OLLAMA:
     from openai import OpenAI
-    ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-    AI_MODEL = "minimax-m3:cloud"
+    ai = OpenAI(
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+        api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
+    )
 else:
     from openai import OpenAI
     ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    AI_MODEL = "gpt-4o-mini"
 
 def leer_json(path, nombre):
     if not os.path.exists(path):

@@ -26,8 +26,11 @@ load_dotenv()
 
 try:
     from openai import OpenAI
-    ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-    AI_MODEL = "ministral-3:14b-cloud"  # Integrante 4
+    ai = OpenAI(
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+        api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
+    )
+    AI_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
     AI_AVAILABLE = True
     # Test de conexión
     ai.models.list()
@@ -124,7 +127,7 @@ def chat_with_ai(query: str, context_mode: str = "basic", conversation_history: 
     """Interactúa con la IA usando el contexto del dashboard"""
     
     if not AI_AVAILABLE:
-        return "❌ **Chatbot no disponible**\n\nLa IA no está configurada correctamente. Verifica que Ollama esté corriendo con el modelo ministral-3:14b-cloud."
+        return f"❌ **Chatbot no disponible**\n\nLa IA no está configurada correctamente. Verifica que Ollama esté corriendo con el modelo {AI_MODEL}."
     
     try:
         # Construir historial de conversación

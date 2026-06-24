@@ -542,7 +542,7 @@ def inject_chat_panel():
                 🤖 SECURITY ASSISTANT
             </div>
             <div class="chat-panel-subtitle">
-                [ AG12 ] ministral-3:14b-cloud | Bilingüe: EN/ES
+                [ AG12 ] minimax-m3:cloud | Bilingüe: EN/ES
             </div>
             <button class="chat-panel-close" onclick="closeChat()">✕ CLOSE</button>
         </div>

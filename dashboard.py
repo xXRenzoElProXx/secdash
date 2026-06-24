@@ -1109,11 +1109,14 @@ st.divider()
 st.markdown('<div class="sec-hdr">// CHAT INTERACTIVO — CONSULTAS EN TIEMPO REAL</div>', unsafe_allow_html=True)
 
 CHAT_HISTORY_FILE = os.path.join("shared_data", "chat_history.json")
-AI_CHAT_MODEL = "ministral-3:14b-cloud"  # Integrante 4 - Definido antes del try
+AI_CHAT_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
 
 try:
     from openai import OpenAI
-    chat_ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+    chat_ai = OpenAI(
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+        api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
+    )
     chat_available = True
     st.markdown(
         '<div style="font-family:JetBrains Mono,monospace;font-size:.64rem;color:#00ff6a;margin-bottom:.8rem;">'

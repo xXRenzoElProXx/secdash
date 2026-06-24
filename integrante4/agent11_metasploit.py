@@ -11,8 +11,11 @@ USE_REAL_APIS = os.getenv("USE_REAL_APIS", "true").lower() == "true"
 REQUEST_TIMEOUT = 15
 
 try:
-    ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-    AI_MODEL = "ministral-3:14b-cloud"  # Integrante 4
+    ai = OpenAI(
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+        api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
+    )
+    AI_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
     # Test de conexión más rápido
     ai.models.list()
     print("   ✓ Ollama conectado")

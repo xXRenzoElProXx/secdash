@@ -248,8 +248,8 @@ def main() -> int:
     parser.add_argument("--ag5", default=str(DEFAULT_AG5), help="Ruta de ag5.json")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT), help="Ruta de salida ag6.json")
     parser.add_argument("--use-ollama", action="store_true", help="Usar Ollama local para clasificar; si falla, usa reglas")
-    parser.add_argument("--ollama-model", default="gemma4:31b-cloud", help="Modelo local de Ollama (Integrante 2)")
-    parser.add_argument("--ollama-url", default="http://localhost:11434", help="URL base de Ollama")
+    parser.add_argument("--ollama-model", default=os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud"), help="Modelo local de Ollama (SecDash)")
+    parser.add_argument("--ollama-url", default=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"), help="URL base de Ollama")
     args = parser.parse_args()
 
     ag4 = load_json(Path(args.ag4))

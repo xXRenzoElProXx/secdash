@@ -5,8 +5,11 @@ from datetime import datetime, UTC
 from openai import OpenAI
 
 try:
-    ai = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-    AI_MODEL = "ministral-3:14b-cloud"  # Integrante 4
+    ai = OpenAI(
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+        api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
+    )
+    AI_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
     # Test de conexión
     ai.models.list()
     print("   ✓ Ollama conectado")
