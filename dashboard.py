@@ -1,5 +1,9 @@
+import json
+import os
+import subprocess
+
+import pandas as pd
 import streamlit as st
-import json, os, subprocess
 
 from styles import inject_styles, inject_canvas, inject_clock, inject_chat_panel
 
@@ -19,6 +23,29 @@ def load_json(n):
     try:
         with open(p, encoding='utf-8') as f: return json.load(f)
     except: return None
+
+
+def normalize_for_dataframe(value):
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    return value
+
+
+def dataframe_from_records(records):
+    if not records:
+        return pd.DataFrame()
+
+    if not isinstance(records, list):
+        records = [records]
+
+    normalized = []
+    for record in records:
+        if isinstance(record, dict):
+            normalized.append({k: normalize_for_dataframe(v) for k, v in record.items()})
+        else:
+            normalized.append({"value": normalize_for_dataframe(record)})
+    return pd.DataFrame(normalized)
+
 
 def risk_icon(lvl):
     return {"alto":"⬤","medio":"◆","bajo":"▲","critico":"✕"}.get((lvl or "").lower(),"·")
@@ -309,7 +336,7 @@ with cn:
     st.markdown('<div class="sec-hdr">// EXPOSED SERVICES</div>', unsafe_allow_html=True)
     svcs = (ag[2] or {}).get("services", [])
     if svcs:
-        st.dataframe(svcs, width='stretch', hide_index=True)
+        st.dataframe(dataframe_from_records(svcs), width='stretch', hide_index=True)
     else:
         st.info("PENDING — run agent 2")
 
@@ -332,7 +359,7 @@ with w1:
     st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-bottom:.5rem;">[ NIKTO SCAN ]</div>', unsafe_allow_html=True)
     hallazgos_ag4 = (ag[4] or {}).get("hallazgos", [])
     if hallazgos_ag4:
-        st.dataframe(hallazgos_ag4, width="stretch", hide_index=True)
+        st.dataframe(dataframe_from_records(hallazgos_ag4), width="stretch", hide_index=True)
         total_ag4 = len(hallazgos_ag4)
         st.caption(f"✓ {total_ag4} hallazgos detectados por Nikto")
     else:
@@ -342,7 +369,7 @@ with w2:
     st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-bottom:.5rem;">[ NUCLEI TEMPLATES ]</div>', unsafe_allow_html=True)
     hallazgos_ag5 = (ag[5] or {}).get("hallazgos", [])
     if hallazgos_ag5:
-        st.dataframe(hallazgos_ag5, width="stretch", hide_index=True)
+        st.dataframe(dataframe_from_records(hallazgos_ag5), width="stretch", hide_index=True)
         total_ag5 = len(hallazgos_ag5)
         st.caption(f"✓ {total_ag5} hallazgos detectados por Nuclei")
     else:
@@ -357,7 +384,7 @@ with cc:
     st.markdown('<div class="sec-hdr">// CVE INTELLIGENCE</div>', unsafe_allow_html=True)
     cves = (ag[7] or {}).get("cves_encontrados", [])
     if cves:
-        st.dataframe(cves, width="stretch", hide_index=True)
+        st.dataframe(dataframe_from_records(cves), width="stretch", hide_index=True)
     else:
         st.info("PENDING — awaiting agent 7 (Integrante 3)")
 
@@ -402,7 +429,7 @@ if ag[2]:
     # Servicios SSL/TLS
     if ssl_services:
         st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1rem;margin-bottom:.5rem;">[ SSL/TLS CONFIGURATION ]</div>', unsafe_allow_html=True)
-        st.dataframe(ssl_services, width="stretch", hide_index=True)
+        st.dataframe(dataframe_from_records(ssl_services), width="stretch", hide_index=True)
     
     # Security Issues
     if security_issues:
@@ -737,8 +764,7 @@ if cmp:
         st.markdown('<div style="font-family:Orbitron,monospace;font-size:.7rem;color:#00ff6a;margin-top:1rem;margin-bottom:.5rem;">[ COMPLIANCE CHECKS DETAIL ]</div>', unsafe_allow_html=True)
         
         # Crear DataFrame con columnas específicas
-        import pandas as pd
-        checks_df = pd.DataFrame(checks)
+        checks_df = dataframe_from_records(checks)
         if not checks_df.empty:
             # Seleccionar columnas relevantes para mostrar
             display_cols = ["framework", "control", "hallazgo", "estado", "severidad", "accion_correctiva"]

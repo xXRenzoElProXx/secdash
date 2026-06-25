@@ -32,8 +32,12 @@ try:
     )
     AI_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
     AI_AVAILABLE = True
-    # Test de conexión
-    ai.models.list()
+    # Test de conexión suave; si falla, se deja como no disponible pero sin romper el flujo
+    try:
+        ai.models.list()
+    except Exception as e:
+        print(f"⚠️ IA no disponible en el arranque: {e}")
+        AI_AVAILABLE = False
 except Exception as e:
     print(f"⚠️ IA no disponible: {e}")
     AI_AVAILABLE = False

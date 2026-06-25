@@ -511,6 +511,16 @@ CLOCK_JS = """
 """
 
 
+def render_html(html: str, height: int = 0, scrolling: bool = False):
+    """Renderiza HTML de forma compatible con versiones antiguas y nuevas de Streamlit."""
+    if hasattr(st, "html"):
+        st.html(html, height=height, scrolling=scrolling)
+    elif hasattr(st.components.v1, "html"):
+        st.components.v1.html(html, height=height, scrolling=scrolling)
+    else:
+        st.markdown(html, unsafe_allow_html=True)
+
+
 def inject_styles():
     """Inyecta el CSS global de SecDash en la app Streamlit."""
     st.markdown(CSS, unsafe_allow_html=True)
@@ -518,12 +528,12 @@ def inject_styles():
 
 def inject_canvas():
     """Renderiza el canvas animado de fondo (grid + sweep + partículas)."""
-    st.components.v1.html(CANVAS_HTML, height=1, scrolling=False)
+    render_html(CANVAS_HTML, height=1, scrolling=False)
 
 
 def inject_clock():
     """Inyecta el script JS que actualiza el reloj UTC en el header."""
-    st.components.v1.html(CLOCK_JS, height=0, scrolling=False)
+    render_html(CLOCK_JS, height=0, scrolling=False)
 
 
 def inject_chat_panel():
@@ -625,4 +635,4 @@ def inject_chat_panel():
     });
     </script>
     """
-    st.components.v1.html(CHAT_PANEL_HTML, height=0, scrolling=False)
+    render_html(CHAT_PANEL_HTML, height=0, scrolling=False)
