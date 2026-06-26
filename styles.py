@@ -253,130 +253,6 @@ hr { border: none !important; border-top: 1px solid rgba(0,255,106,.1) !importan
     animation: headerBar 3s ease-in-out infinite;
 }
 
-/* ── Chat Panel Lateral ── */
-#chat-panel-overlay {
-    position: fixed;
-    top: 0; right: 0; bottom: 0; left: 0;
-    background: rgba(4,13,6,0.92);
-    backdrop-filter: blur(3px);
-    z-index: 10000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.35s ease, visibility 0.35s ease;
-}
-#chat-panel-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-#chat-panel {
-    position: fixed;
-    top: 0; right: -480px; bottom: 0;
-    width: 480px; max-width: 85vw;
-    background: #020b04;
-    border-left: 2px solid #00ff6a;
-    box-shadow: -8px 0 32px rgba(0,255,106,0.25);
-    z-index: 10001;
-    display: flex; flex-direction: column;
-    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-}
-#chat-panel.active {
-    right: 0;
-}
-.chat-panel-header {
-    background: linear-gradient(135deg, #030e05, #040d06);
-    border-bottom: 1px solid rgba(0,255,106,0.2);
-    padding: 1.2rem 1.5rem;
-    flex-shrink: 0;
-}
-.chat-panel-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.1rem; font-weight: 900;
-    color: #00ff6a; letter-spacing: 0.12em;
-    text-shadow: 0 0 16px rgba(0,255,106,0.5);
-    display: flex; align-items: center; gap: 0.6rem;
-}
-.chat-panel-subtitle {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem; color: #4dcc7a;
-    letter-spacing: 0.1em; margin-top: 0.4rem;
-}
-.chat-panel-close {
-    position: absolute; top: 1.2rem; right: 1.5rem;
-    background: transparent; border: 1px solid rgba(0,255,106,0.3);
-    color: #00ff6a; font-family: 'Orbitron', monospace;
-    font-size: 0.7rem; font-weight: 700; padding: 0.35rem 0.8rem;
-    cursor: pointer; letter-spacing: 0.08em;
-    transition: all 0.2s ease;
-    border-radius: 2px;
-}
-.chat-panel-close:hover {
-    background: rgba(0,255,106,0.1);
-    box-shadow: 0 0 16px rgba(0,255,106,0.3);
-}
-.chat-panel-body {
-    flex: 1; overflow-y: auto; overflow-x: hidden;
-    padding: 1rem 1.5rem;
-    background: #040d06;
-}
-.chat-panel-body::-webkit-scrollbar { width: 6px; }
-.chat-panel-body::-webkit-scrollbar-track { background: #030a04; }
-.chat-panel-body::-webkit-scrollbar-thumb { 
-    background: rgba(0,255,106,0.3); border-radius: 3px; 
-}
-.chat-panel-body::-webkit-scrollbar-thumb:hover { 
-    background: rgba(0,255,106,0.5); 
-}
-.chat-panel-footer {
-    border-top: 1px solid rgba(0,255,106,0.15);
-    background: #030a04;
-    padding: 1rem 1.5rem;
-    flex-shrink: 0;
-}
-.chat-toggle-btn {
-    position: fixed; bottom: 2rem; right: 2rem;
-    width: 64px; height: 64px;
-    background: linear-gradient(135deg, #00ff6a, #00cc55);
-    border: 2px solid #00ff6a; border-radius: 50%;
-    box-shadow: 0 4px 24px rgba(0,255,106,0.45), 0 0 12px rgba(0,255,106,0.3);
-    cursor: pointer; z-index: 9999;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem; color: #020b04;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: chatPulse 2.5s ease-in-out infinite;
-}
-.chat-toggle-btn:hover {
-    transform: scale(1.1); box-shadow: 0 6px 32px rgba(0,255,106,0.6);
-}
-.chat-toggle-btn:active {
-    transform: scale(0.95);
-}
-.chat-toggle-btn.active {
-    background: linear-gradient(135deg, #ff6464, #ff3333);
-    border-color: #ff6464;
-    box-shadow: 0 4px 24px rgba(255,100,100,0.45);
-}
-.chat-badge {
-    position: absolute; top: -4px; right: -4px;
-    background: #ff3333; color: white;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem; font-weight: 700;
-    padding: 0.15rem 0.4rem; border-radius: 10px;
-    border: 2px solid #020b04;
-    box-shadow: 0 2px 8px rgba(255,51,51,0.5);
-}
-@keyframes chatPulse {
-    0%, 100% { box-shadow: 0 4px 24px rgba(0,255,106,0.45), 0 0 12px rgba(0,255,106,0.3); }
-    50% { box-shadow: 0 4px 32px rgba(0,255,106,0.65), 0 0 20px rgba(0,255,106,0.5); }
-}
-
-@media(max-width:768px){
-    .block-container{padding-left:.6rem !important;padding-right:.6rem !important;}
-    [data-testid="stMetricValue"]{font-size:1.05rem !important;}
-    section[data-testid="stSidebar"]{width:180px !important;min-width:180px !important;}
-    #chat-panel { width: 100%; max-width: 100vw; right: -100%; }
-    .chat-toggle-btn { bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px; font-size: 1.5rem; }
-}
 </style>
 """
 
@@ -514,9 +390,15 @@ CLOCK_JS = """
 def render_html(html: str, height: int = 0, scrolling: bool = False):
     """Renderiza HTML de forma compatible con versiones antiguas y nuevas de Streamlit."""
     if hasattr(st, "html"):
-        st.html(html, height=height, scrolling=scrolling)
+        try:
+            st.html(html, height=height, scrolling=scrolling)
+        except TypeError:
+            st.html(html)
     elif hasattr(st.components.v1, "html"):
-        st.components.v1.html(html, height=height, scrolling=scrolling)
+        try:
+            st.components.v1.html(html, height=height, scrolling=scrolling)
+        except TypeError:
+            st.components.v1.html(html)
     else:
         st.markdown(html, unsafe_allow_html=True)
 
@@ -635,4 +517,4 @@ def inject_chat_panel():
     });
     </script>
     """
-    render_html(CHAT_PANEL_HTML, height=0, scrolling=False)
+    return None

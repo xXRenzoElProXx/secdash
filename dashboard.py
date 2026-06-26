@@ -26,9 +26,20 @@ def load_json(n):
 
 
 def normalize_for_dataframe(value):
+    if value is None:
+        return ""
     if isinstance(value, (dict, list)):
-        return json.dumps(value, ensure_ascii=False)
-    return value
+        try:
+            return json.dumps(value, ensure_ascii=False)
+        except Exception:
+            return str(value)
+    if isinstance(value, (pd.Timestamp, pd.Timedelta)):
+        return str(value)
+    if isinstance(value, (tuple, set)):
+        return ", ".join(str(v) for v in value)
+    if isinstance(value, (int, float, bool, str)):
+        return value
+    return str(value)
 
 
 def dataframe_from_records(records):
@@ -44,7 +55,11 @@ def dataframe_from_records(records):
             normalized.append({k: normalize_for_dataframe(v) for k, v in record.items()})
         else:
             normalized.append({"value": normalize_for_dataframe(record)})
-    return pd.DataFrame(normalized)
+
+    df = pd.DataFrame(normalized)
+    for col in df.columns:
+        df[col] = df[col].apply(normalize_for_dataframe)
+    return df
 
 
 def risk_icon(lvl):
@@ -1139,10 +1154,16 @@ AI_CHAT_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
 
 try:
     from openai import OpenAI
+    from httpx import Timeout
+
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
+    api_key = os.getenv("OLLAMA_API_KEY", "ollama")
     chat_ai = OpenAI(
-        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
-        api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
+        base_url=base_url,
+        api_key=api_key,
+        timeout=Timeout(5.0, connect=5.0),
     )
+    chat_ai.models.list()
     chat_available = True
     st.markdown(
         '<div style="font-family:JetBrains Mono,monospace;font-size:.64rem;color:#00ff6a;margin-bottom:.8rem;">'
@@ -1152,8 +1173,33 @@ except Exception as e:
     chat_available = False
     st.markdown(
         f'<div style="font-family:JetBrains Mono,monospace;font-size:.64rem;color:#ffcc00;margin-bottom:.8rem;">'
-        f'[ CHAT ] ⚠ IA offline — {str(e)[:50]}'
+        f'[ CHAT ] ⚠ IA offline — {str(e)[:80]}'
         '</div>', unsafe_allow_html=True)
+
+def build_fallback_chat_response(prompt: str, target: str, score, nivel: str, agentes_ok: int, ag) -> str:
+    prompt_lower = (prompt or "").lower()
+    if any(word in prompt_lower for word in ["hola", "hi", "hello", "olá"]):
+        return (
+            "🤖 SecDash está respondiendo en modo mock.\n\n"
+            "Puedes probar consultas como:\n"
+            "- ¿Qué vulnerabilidades son críticas?\n"
+            "- ¿Qué harías primero con este target?\n"
+            "- Explícame los hallazgos del dashboard\n\n"
+            "Para activar la IA real, inicia Ollama y ejecuta el modelo configurado."
+        )
+
+    if any(word in prompt_lower for word in ["vulnerabilidad", "cve", "critical", "crítico", "alto"]):
+        return (
+            "🛡️ Respuesta de respaldo: revisa los hallazgos de los agentes 4, 5 y 7 y prioriza parcheo para "
+            f"los elementos con mayor severidad del target {target}."
+        )
+
+    return (
+        f"🤖 Respuesta de respaldo de SecDash para {target}.\n\n"
+        f"Estado actual: {agentes_ok}/12 agentes cargados, score {score}/100 ({nivel}).\n"
+        "Puedo ayudarte a priorizar remediación, explicar hallazgos o resumir riesgos mientras la IA real no esté disponible."
+    )
+
 
 def load_chat_history():
     try:
@@ -1219,7 +1265,7 @@ Tienes acceso contextual a todos estos datos para dar respuestas precisas.
 
     with st.chat_message("assistant"):
         if not chat_available:
-            response_text = f"⚠️ **Chat IA desconectado**\n\nAsegúrate de que Ollama esté corriendo:\n```bash\nollama serve\nollama pull {AI_CHAT_MODEL}\n```"
+            response_text = build_fallback_chat_response(prompt, target, score, nivel, agentes_ok, ag)
             st.markdown(response_text)
         else:
             with st.spinner("Analizando..." if any(c in prompt.lower() for c in "áéíóúñ¿¡") else "Analyzing..."):
@@ -1258,7 +1304,7 @@ Responde basándote en estos datos reales cuando sea relevante."""},
                     response_text = response.choices[0].message.content
                     st.markdown(response_text)
                 except Exception as e:
-                    response_text = f"❌ **Error de comunicación con IA**: {str(e)}\n\nVerifica que Ollama esté corriendo y el modelo {AI_CHAT_MODEL} instalado."
+                    response_text = build_fallback_chat_response(prompt, target, score, nivel, agentes_ok, ag) + f"\n\n⚠️ Detalle del error: {str(e)[:120]}"
                     st.markdown(response_text)
 
     st.session_state.messages.append({"role": "assistant", "content": response_text})

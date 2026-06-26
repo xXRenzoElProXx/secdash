@@ -24,13 +24,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+AI_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
+AI_AVAILABLE = False
+ai = None
+
 try:
     from openai import OpenAI
     ai = OpenAI(
         base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
         api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
     )
-    AI_MODEL = os.getenv("SECDASH_AI_MODEL", "minimax-m3:cloud")
     AI_AVAILABLE = True
     # Test de conexión suave; si falla, se deja como no disponible pero sin romper el flujo
     try:
@@ -127,11 +130,48 @@ Cuando respondas, haz referencia específica a los hallazgos cuando sea relevant
     
     return base_prompt
 
-def chat_with_ai(query: str, context_mode: str = "basic", conversation_history: List[Dict] = None) -> str:
+def generate_fallback_response(query: str, context_mode: str = "basic") -> str:
+    """Genera una respuesta local cuando no hay OpenAI/Ollama disponible."""
+    query_lower = (query or "").lower()
+
+    if any(word in query_lower for word in ["hola", "hi", "hello", "olá"]):
+        return (
+            "🤖 Respuesta de respaldo de SecDash.\n\n"
+            "El chatbot está funcionando en modo mock porque no hay conexión con OpenAI/Ollama.\n\n"
+            "Prueba con consultas como:\n"
+            "- ¿Qué vulnerabilidades son críticas?\n"
+            "- Explícame los CVEs más relevantes\n"
+            "- ¿Qué acciones de remediación priorizaría?\n\n"
+            "Para activar la IA real, ejecuta:\n"
+            "```bash\n"
+            "ollama serve\n"
+            f"ollama pull {AI_MODEL}\n"
+            "```"
+        )
+
+    if any(word in query_lower for word in ["vulnerabilidad", "cve", "critical", "crítico", "alto"]):
+        return (
+            "🛡️ Respuesta de respaldo: prioriza revisar los hallazgos de los agentes 4, 5 y 7, "
+            "especialmente aquellos con severidad alta o crítica, y validar parcheo inmediato."
+        )
+
+    if any(word in query_lower for word in ["ioc", "threat", "malware", "amenaza"]):
+        return (
+            "📡 Respuesta de respaldo: revisa la reputación de los IOCs, valida si hay actividad sospechosa "
+            "y aisla los indicadores con mayor score de riesgo antes de tomar acciones."
+        )
+
+    return (
+        "🤖 Modo mock activado. SecDash puede responder con un resumen local mientras no haya conexión con Ollama/OpenAI.\n\n"
+        "Prueba una consulta como 'hola', '¿qué vulnerabilidades son críticas?' o '¿qué harías primero?'."
+    )
+
+
+def chat_with_ai(query: str, context_mode: str = "basic", conversation_history: List[Dict] = None, use_mock: bool = False) -> str:
     """Interactúa con la IA usando el contexto del dashboard"""
     
-    if not AI_AVAILABLE:
-        return f"❌ **Chatbot no disponible**\n\nLa IA no está configurada correctamente. Verifica que Ollama esté corriendo con el modelo {AI_MODEL}."
+    if not AI_AVAILABLE or use_mock:
+        return generate_fallback_response(query, context_mode)
     
     try:
         # Construir historial de conversación
@@ -180,7 +220,7 @@ def chat_with_ai(query: str, context_mode: str = "basic", conversation_history: 
     except Exception as e:
         return f"❌ **Error en chatbot**: {e}\n\nVerifica la conexión con Ollama y el modelo {AI_MODEL}."
 
-def interactive_mode():
+def interactive_mode(mock_mode: bool = False):
     """Modo interactivo del chatbot"""
     print("🤖 **SecDash Security Chatbot** - Agent 12")
     print(f"Modelo: {AI_MODEL}")
@@ -222,7 +262,7 @@ def interactive_mode():
                 continue
             
             print("🤖 Analizando...")
-            response = chat_with_ai(query, context_mode, conversation_history)
+            response = chat_with_ai(query, context_mode, conversation_history, use_mock=mock_mode)
             print(f"\n{response}\n")
             
             # Guardar en historial
@@ -239,13 +279,15 @@ def interactive_mode():
         except Exception as e:
             print(f"❌ Error: {e}")
 
-def generate_security_report() -> Dict[str, Any]:
+def generate_security_report(mock_mode: bool = False) -> Dict[str, Any]:
     """Genera un reporte de seguridad usando IA y datos del dashboard"""
     
-    if not AI_AVAILABLE:
+    if not AI_AVAILABLE or mock_mode:
         return {
             "error": "IA no disponible",
-            "timestamp": datetime.now(UTC).isoformat()
+            "modo": "mock",
+            "timestamp": datetime.now(UTC).isoformat(),
+            "resumen": "Reporte generado en modo mock con respuestas locales de respaldo."
         }
     
     context_data = load_dashboard_context()
@@ -268,7 +310,7 @@ def generate_security_report() -> Dict[str, Any]:
     
     for i, query in enumerate(queries, 1):
         try:
-            response = chat_with_ai(query, "full")
+            response = chat_with_ai(query, "full", use_mock=mock_mode)
             report["analisis_automatico"][f"seccion_{i}"] = {
                 "pregunta": query,
                 "analisis": response
@@ -288,17 +330,18 @@ def main():
     parser.add_argument("--context-mode", choices=["basic", "full"], default="basic", 
                        help="Modo de contexto (basic o full con datos dashboard)")
     parser.add_argument("--generate-report", action="store_true", help="Generar reporte automático")
+    parser.add_argument("--mock", action="store_true", help="Usar respuestas locales de respaldo sin Ollama/OpenAI")
     parser.add_argument("--output", default="shared_data/ag12.json", help="Archivo de salida")
     
     args = parser.parse_args()
     
     if args.interactive:
-        interactive_mode()
+        interactive_mode(mock_mode=args.mock)
         return 0
     
     if args.generate_report:
         print("📊 Generando reporte de seguridad automático...")
-        report = generate_security_report()
+        report = generate_security_report(mock_mode=args.mock)
         
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -311,7 +354,7 @@ def main():
     
     if args.query:
         print("🤖 Procesando consulta...")
-        response = chat_with_ai(args.query, args.context_mode)
+        response = chat_with_ai(args.query, args.context_mode, use_mock=args.mock)
         print(f"\n{response}")
         return 0
     

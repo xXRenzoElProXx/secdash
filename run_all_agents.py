@@ -97,7 +97,7 @@ def main():
     agents_int4 = [
         (["python", "integrante4/agent10_compliance.py"], "AG10 - Compliance Checker"),
         (["python", "integrante4/agent11_metasploit.py"], "AG11 - Metasploit Advisor"),
-        (["python", "integrante4/agent12_chatbot.py", "--generate-report"], "AG12 - Security Chatbot Report"),
+        (["python", "integrante4/agent12_chatbot.py", "--generate-report"] + mock_flag, "AG12 - Security Chatbot Report"),
     ]
     
     for cmd, desc in agents_int4:
