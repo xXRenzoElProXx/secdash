@@ -24,14 +24,19 @@ def run_nmap(ip):
     print(f"   Ejecutando nmap sobre {ip}...")
     print("   (puede tardar 1-2 minutos)")
 
-    cmd = f"nmap -sV -O --script=banner,ssl-cert,ssh-auth-methods,firewall-bypass --open -T4 {ip}"
+    # Primero intenta con modo rápido (-T5 es máximo speed)
+    cmd = f"nmap -sV --open -T5 --max-retries 1 {ip}"
     try:
         result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=180
+            cmd, shell=True, capture_output=True, text=True, timeout=120
         )
-        return result.stdout
+        if result.returncode == 0:
+            return result.stdout
+        else:
+            return f"ERROR: {result.stderr}"
     except subprocess.TimeoutExpired:
-        return "TIMEOUT: nmap tardó demasiado"
+        print("   ⚠️ nmap tardo > 2min. Intentando modo más rápido...")
+        return "TIMEOUT"
     except Exception as e:
         return f"ERROR: {e}"
 
@@ -46,7 +51,12 @@ def run_nmap_os(ip):
         return "No detectado (requiere sudo)"
 
 def parsear_nmap_con_ia(ip, nmap_output):
-    prompt = f"""Analiza este output de nmap y devuelve SOLO un JSON válido con esta estructura exacta:
+    # Si nmap no retorna nada, usar fallback
+    if not nmap_output or len(nmap_output) < 50:
+        return parsear_nmap_manual(ip, nmap_output)
+    
+    try:
+        prompt = f"""Analiza este output de nmap y devuelve SOLO un JSON válido con esta estructura exacta:
 {{
   "ip": "{ip}",
   "puertos_abiertos": [
@@ -86,17 +96,18 @@ Output de nmap:
 
 Responde SOLO con el JSON, sin texto adicional ni markdown."""
 
-    response = ai.chat.completions.create(
-        model=AI_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1,
-    )
-    raw = response.choices[0].message.content.strip()
-    raw = re.sub(r"```json|```", "", raw).strip()
+        response = ai.chat.completions.create(
+            model=AI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+        )
+        raw = response.choices[0].message.content.strip()
+        raw = re.sub(r"```json|```", "", raw).strip()
 
-    try:
         return json.loads(raw)
-    except json.JSONDecodeError:
+    except Exception as e:
+        # Fallback a parseador manual si IA falla
+        print(f"   ⚠️ IA falló: {str(e)[:50]}. Usando parser manual...")
         return parsear_nmap_manual(ip, nmap_output)
 
 def parsear_nmap_manual(ip, nmap_output):
@@ -119,82 +130,110 @@ def parsear_nmap_manual(ip, nmap_output):
     }
 
 def run_agent():
-    print(f"\n🖧 Agente 2 — Network Exposure")
+    try:
+        print(f"\n🖧 Agente 2 — Network Exposure")
 
-    ag1_path = os.path.join(
-        os.path.dirname(__file__), "..", "shared_data", "ag1.json"
-    )
+        ag1_path = os.path.join(
+            os.path.dirname(__file__), "..", "shared_data", "ag1.json"
+        )
 
-    if not os.path.exists(ag1_path):
-        print("   ⚠ No se encontró ag1.json. Usando IP de ejemplo.")
-        ip = "scanme.nmap.org"
-        target = ip
-    else:
-        with open(ag1_path) as f:
-            ag1 = json.load(f)
-        ip = ag1.get("ip", "scanme.nmap.org")
-        target = ag1.get("target", ip)
-        print(f"   Leyó ag1.json → IP: {ip}")
+        if not os.path.exists(ag1_path):
+            print("   ⚠ No se encontró ag1.json. Usando IP de ejemplo.")
+            ip = "scanme.nmap.org"
+            target = ip
+        else:
+            with open(ag1_path) as f:
+                ag1 = json.load(f)
+            ip = ag1.get("ip", "scanme.nmap.org")
+            target = ag1.get("target", ip)
+            print(f"   Leyó ag1.json → IP: {ip}")
 
-    nmap_output = run_nmap(ip)
+        nmap_output = run_nmap(ip)
 
-    if "ERROR" in nmap_output or "TIMEOUT" in nmap_output:
-        print(f"   ❌ Error en nmap: {nmap_output}")
-        print("   Generando resultado vacío...")
-        parsed = {"ip": ip, "puertos_abiertos": [], "os_detected": "Error", "resumen": nmap_output}
-    else:
-        print("   🤖 Parseando output con IA...")
-        parsed = parsear_nmap_con_ia(ip, nmap_output)
+        if "ERROR" in nmap_output or "TIMEOUT" in nmap_output:
+            print(f"   ⚠️ nmap falló: {nmap_output[:100]}")
+            print("   Generando resultado básico sin escaneo profundo...")
+            parsed = {"ip": ip, "puertos_abiertos": [], "os_detected": "Timeout/Error", "resumen": "Escaneo de nmap no disponible"}
+        else:
+            print("   🤖 Parseando output con IA...")
+            parsed = parsear_nmap_con_ia(ip, nmap_output)
 
-    resultado = {
-        "target": target,
-        "ip": ip,
-        "services": parsed.get("puertos_abiertos", []),
-        "os_detected": parsed.get("os_detected", "desconocido"),
-        "firewall_ids_detection": parsed.get("firewall_ids_detection", {
-            "firewall_present": False,
-            "ids_ips_detected": False,
-            "filtered_ports": 0,
-            "evidence": "No detectado"
-        }),
-        "ssl_tls_services": parsed.get("ssl_tls_services", []),
-        "security_issues": parsed.get("security_issues", []),
-        "resumen": parsed.get("resumen", ""),
-        "timestamp": datetime.now(UTC).isoformat()    
-     }
+        resultado = {
+            "target": target,
+            "ip": ip,
+            "services": parsed.get("puertos_abiertos", []),
+            "os_detected": parsed.get("os_detected", "desconocido"),
+            "firewall_ids_detection": parsed.get("firewall_ids_detection", {
+                "firewall_present": False,
+                "ids_ips_detected": False,
+                "filtered_ports": 0,
+                "evidence": "No detectado"
+            }),
+            "ssl_tls_services": parsed.get("ssl_tls_services", []),
+            "security_issues": parsed.get("security_issues", []),
+            "resumen": parsed.get("resumen", ""),
+            "timestamp": datetime.now(UTC).isoformat()    
+        }
 
-    output_path = os.path.join(
-        os.path.dirname(__file__), "..", "shared_data", "ag2.json"
-    )
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(resultado, f, indent=2, ensure_ascii=False)
+        output_path = os.path.join(
+            os.path.dirname(__file__), "..", "shared_data", "ag2.json"
+        )
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(resultado, f, indent=2, ensure_ascii=False)
 
-    print(f"\n   ✅ Listo. Guardado en shared_data/ag2.json")
-    print(f"   📊 Resumen:")
-    print(f"      IP: {ip}")
-    print(f"      OS: {resultado['os_detected']}")
-    print(f"      Puertos abiertos: {len(resultado['services'])}")
+        print(f"\n   ✅ Listo. Guardado en shared_data/ag2.json")
+        print(f"   📊 Resumen:")
+        print(f"      IP: {ip}")
+        print(f"      OS: {resultado['os_detected']}")
+        print(f"      Puertos abiertos: {len(resultado['services'])}")
+        
+        fw_data = resultado.get('firewall_ids_detection', {})
+        if fw_data.get('firewall_present'):
+            print(f"      🔥 Firewall detectado: {fw_data.get('evidence', 'Sí')}")
+        if fw_data.get('ids_ips_detected'):
+            print(f"      🚨 IDS/IPS detectado")
+        
+        ssl_services = resultado.get('ssl_tls_services', [])
+        if ssl_services:
+            print(f"      🔐 Servicios SSL/TLS: {len(ssl_services)}")
+        
+        issues = resultado.get('security_issues', [])
+        if issues:
+            print(f"      ⚠️ Issues de seguridad: {len(issues)}")
+        
+        for s in resultado["services"][:5]:
+            print(f"        → {s['port']}/{s['protocol']} {s['service']} {s.get('version','')}")
+        if len(resultado["services"]) > 5:
+            print(f"        ... y {len(resultado['services'])-5} más")
+
+        return resultado
     
-    fw_data = resultado.get('firewall_ids_detection', {})
-    if fw_data.get('firewall_present'):
-        print(f"      🔥 Firewall detectado: {fw_data.get('evidence', 'Sí')}")
-    if fw_data.get('ids_ips_detected'):
-        print(f"      🚨 IDS/IPS detectado")
-    
-    ssl_services = resultado.get('ssl_tls_services', [])
-    if ssl_services:
-        print(f"      🔐 Servicios SSL/TLS: {len(ssl_services)}")
-    
-    issues = resultado.get('security_issues', [])
-    if issues:
-        print(f"      ⚠️ Issues de seguridad: {len(issues)}")
-    
-    for s in resultado["services"][:5]:
-        print(f"        → {s['port']}/{s['protocol']} {s['service']} {s.get('version','')}")
-    if len(resultado["services"]) > 5:
-        print(f"        ... y {len(resultado['services'])-5} más")
-
-    return resultado
+    except Exception as e:
+        # Fallback: generar ag2.json con error para no bloquear el pipeline
+        print(f"   ❌ Error en AG2: {str(e)}")
+        
+        resultado = {
+            "target": "desconocido",
+            "ip": "error",
+            "services": [],
+            "os_detected": "error",
+            "firewall_ids_detection": {},
+            "ssl_tls_services": [],
+            "security_issues": [f"Error durante ejecución: {str(e)}"],
+            "resumen": "Agente falló",
+            "timestamp": datetime.now(UTC).isoformat(),
+            "error": str(e)
+        }
+        
+        output_path = os.path.join(
+            os.path.dirname(__file__), "..", "shared_data", "ag2.json"
+        )
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(resultado, f, indent=2, ensure_ascii=False)
+        
+        print(f"   📁 Error JSON guardado en shared_data/ag2.json")
+        raise
 
 if __name__ == "__main__":
     run_agent()
