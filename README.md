@@ -655,21 +655,3 @@ SecDash AI SOC fue diseñado como una plataforma académica para demostrar:
 SecDash AI SOC es una plataforma que integra múltiples agentes de ciberseguridad en un único dashboard. Cada agente analiza una parte del problema, genera información estructurada en JSON y el dashboard consolida esos datos en una vista operativa.
 
 El sistema cubre descubrimiento, red, superficie de ataque, escaneo web, OWASP, CVEs, threat intelligence, compliance, exploits y análisis asistido por IA.
-
-La ejecución recomendada en Kali es:
-
-```bash
-cd ~
-git clone https://github.com/xXRenzoElProXx/secdash.git
-cd ~/secdash
-python3 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-pip install openai
-ollama serve
-ollama pull minimax-m3:cloud
-streamlit run dashboard.py
-```
-
-Recordatorio: `ollama serve` debe quedar ejecutándose en una terminal. El dashboard puede ejecutarse en otra terminal con el entorno virtual activado.
