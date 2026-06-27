@@ -2,6 +2,7 @@ import json
 import subprocess
 import os
 import re
+import time
 from datetime import datetime, UTC
 from dotenv import load_dotenv
 
@@ -20,41 +21,118 @@ else:
     from openai import OpenAI
     ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def run_nmap(ip):
-    print(f"   Ejecutando nmap sobre {ip}...")
-    print("   (puede tardar 1-2 minutos)")
+# Configuración desde variables de entorno
+SCAN_TYPE = os.getenv("SCAN_TYPE", "fast")  # "fast" o "full"
+TIMEOUT_FAST = int(os.getenv("TIMEOUT_FAST", "180"))
+TIMEOUT_ULTRA = int(os.getenv("TIMEOUT_ULTRA", "60"))
+TIMEOUT_FULL = int(os.getenv("TIMEOUT_FULL", "300"))
 
-    # Primero intenta con modo rápido (-T5 es máximo speed)
-    cmd = f"nmap -sV --open -T5 --max-retries 1 {ip}"
+def run_nmap(ip):
+    """Ejecuta nmap con estrategia de fases para garantizar resultados rápidos."""
+    print(f"   Ejecutando nmap sobre {ip}...")
+
+    if SCAN_TYPE == "full":
+        cmd = f"nmap -sV --open -T4 --max-retries 1 -p- {ip}"
+        print(f"   Comando (full): {cmd}")
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=TIMEOUT_FULL)
+            if result.returncode == 0 and len(result.stdout) > 100:
+                return result.stdout
+            cmd_pn = f"nmap -sV --open -T4 --max-retries 1 -Pn -p- {ip}"
+            result = subprocess.run(cmd_pn, shell=True, capture_output=True, text=True, timeout=TIMEOUT_FULL)
+            if result.returncode == 0:
+                return result.stdout
+        except subprocess.TimeoutExpired:
+            print(f"   ⚠️ Escaneo completo agotó {TIMEOUT_FULL}s.")
+        except Exception as e:
+            return f"ERROR: {e}"
+        return "ERROR: No se pudo completar escaneo completo"
+
+    # Escaneo rápido (top 1000 puertos)
+    cmd = f"nmap -sV --open -T4 --max-retries 2 --top-ports 1000 {ip}"
+    print(f"   Comando (fast): {cmd}")
     try:
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=120
-        )
-        if result.returncode == 0:
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=TIMEOUT_FAST)
+        if result.returncode == 0 and len(result.stdout) > 100:
             return result.stdout
-        else:
-            return f"ERROR: {result.stderr}"
     except subprocess.TimeoutExpired:
-        print("   ⚠️ nmap tardo > 2min. Intentando modo más rápido...")
-        return "TIMEOUT"
+        print(f"   ⚠️ Escaneo rápido agotó {TIMEOUT_FAST}s.")
     except Exception as e:
-        return f"ERROR: {e}"
+        print(f"   ⚠️ Error en escaneo rápido: {e}")
+
+    # Reintento con -Pn
+    print("   Reintentando con -Pn (sin ping)...")
+    cmd_pn = f"nmap -sV --open -T4 --max-retries 2 -Pn --top-ports 1000 {ip}"
+    try:
+        result = subprocess.run(cmd_pn, shell=True, capture_output=True, text=True, timeout=TIMEOUT_FAST)
+        if result.returncode == 0 and len(result.stdout) > 100:
+            return result.stdout
+    except subprocess.TimeoutExpired:
+        print(f"   ⚠️ Escaneo rápido con -Pn agotó {TIMEOUT_FAST}s.")
+    except Exception as e:
+        print(f"   ⚠️ Error en escaneo rápido con -Pn: {e}")
+
+    # Último recurso: top 100 puertos
+    print("   Intentando escaneo ultra rápido (top 100 puertos)...")
+    cmd_ultra = f"nmap -sV --open -T5 --max-retries 1 -F {ip}"
+    try:
+        result = subprocess.run(cmd_ultra, shell=True, capture_output=True, text=True, timeout=TIMEOUT_ULTRA)
+        if result.returncode == 0 and len(result.stdout) > 50:
+            return result.stdout
+    except subprocess.TimeoutExpired:
+        print(f"   ⚠️ Escaneo ultra rápido agotó {TIMEOUT_ULTRA}s.")
+    except Exception as e:
+        print(f"   ⚠️ Error en escaneo ultra rápido: {e}")
+
+    return "ERROR: No se pudo obtener respuesta de nmap con ninguna estrategia"
 
 def run_nmap_os(ip):
+    """Detecta SO (opcional, no se usa en el flujo principal)"""
     cmd = f"sudo nmap -O --osscan-guess {ip} 2>/dev/null | grep -i 'os\\|running'"
     try:
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=60
-        )
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
         return result.stdout.strip() or "No detectado"
     except:
         return "No detectado (requiere sudo)"
 
+def parsear_nmap_manual(ip, nmap_output):
+    """Parseo manual mejorado con extracción de banners y versiones."""
+    services = []
+    os_detected = "No detectado"
+    for line in nmap_output.splitlines():
+        match = re.match(r"^(\d+)/(tcp|udp)\s+open\s+(\S+)\s*(.*)$", line)
+        if match:
+            port = int(match.group(1))
+            protocol = match.group(2)
+            service = match.group(3)
+            version = match.group(4).strip()
+            banner = ""
+            if "(" in version and ")" in version:
+                banner = version[version.find("(")+1:version.find(")")]
+            elif version:
+                banner = version
+            services.append({
+                "port": port,
+                "protocol": protocol,
+                "state": "open",
+                "service": service,
+                "version": version,
+                "banner": banner if banner else version
+            })
+    for line in nmap_output.splitlines():
+        if "OS details" in line or "Running" in line:
+            os_detected = line.strip()
+            break
+    return {
+        "ip": ip,
+        "puertos_abiertos": services,
+        "os_detected": os_detected,
+        "resumen": f"{len(services)} puertos abiertos encontrados (parseo manual)"
+    }
+
 def parsear_nmap_con_ia(ip, nmap_output):
-    # Si nmap no retorna nada, usar fallback
     if not nmap_output or len(nmap_output) < 50:
         return parsear_nmap_manual(ip, nmap_output)
-    
     try:
         prompt = f"""Analiza este output de nmap y devuelve SOLO un JSON válido con esta estructura exacta:
 {{
@@ -95,7 +173,6 @@ Output de nmap:
 {nmap_output[:3000]}
 
 Responde SOLO con el JSON, sin texto adicional ni markdown."""
-
         response = ai.chat.completions.create(
             model=AI_MODEL,
             messages=[{"role": "user", "content": prompt}],
@@ -103,57 +180,62 @@ Responde SOLO con el JSON, sin texto adicional ni markdown."""
         )
         raw = response.choices[0].message.content.strip()
         raw = re.sub(r"```json|```", "", raw).strip()
-
         return json.loads(raw)
     except Exception as e:
-        # Fallback a parseador manual si IA falla
         print(f"   ⚠️ IA falló: {str(e)[:50]}. Usando parser manual...")
         return parsear_nmap_manual(ip, nmap_output)
-
-def parsear_nmap_manual(ip, nmap_output):
-    services = []
-    for line in nmap_output.splitlines():
-        match = re.match(r"(\d+)/(tcp|udp)\s+open\s+(\S+)\s*(.*)", line)
-        if match:
-            services.append({
-                "port": int(match.group(1)),
-                "protocol": match.group(2),
-                "state": "open",
-                "service": match.group(3),
-                "version": match.group(4).strip()
-            })
-    return {
-        "ip": ip,
-        "puertos_abiertos": services,
-        "os_detected": "No detectado",
-        "resumen": f"{len(services)} puertos abiertos encontrados"
-    }
 
 def run_agent():
     try:
         print(f"\n🖧 Agente 2 — Network Exposure")
 
-        ag1_path = os.path.join(
-            os.path.dirname(__file__), "..", "shared_data", "ag1.json"
-        )
+        # Rutas absolutas
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        shared_dir = os.path.join(base_dir, "..", "shared_data")
+        ag1_path = os.path.join(shared_dir, "ag1.json")
 
-        if not os.path.exists(ag1_path):
-            print("   ⚠ No se encontró ag1.json. Usando IP de ejemplo.")
+        # Esperar hasta que ag1.json exista (máximo 5 intentos)
+        ag1 = None
+        for intento in range(5):
+            if os.path.exists(ag1_path):
+                try:
+                    with open(ag1_path, 'r', encoding='utf-8') as f:
+                        ag1 = json.load(f)
+                    print(f"   ✅ Leído ag1.json (intento {intento+1})")
+                    break
+                except Exception as e:
+                    print(f"   ⚠️ Error al leer ag1.json: {e}")
+                    ag1 = None
+                    break
+            else:
+                print(f"   ⏳ Esperando ag1.json... (intento {intento+1}/5)")
+                time.sleep(2)
+
+        if ag1:
+            ip = ag1.get("ip")
+            target = ag1.get("target")
+            if not ip:
+                print("   ⚠️ ag1.json no contiene IP. Usando fallback.")
+                ip = "scanme.nmap.org"
+                target = ip
+            else:
+                print(f"   📡 IP obtenida: {ip}, Target: {target}")
+        else:
             ip = "scanme.nmap.org"
             target = ip
-        else:
-            with open(ag1_path) as f:
-                ag1 = json.load(f)
-            ip = ag1.get("ip", "scanme.nmap.org")
-            target = ag1.get("target", ip)
-            print(f"   Leyó ag1.json → IP: {ip}")
+            print(f"   ⚠️ Usando fallback: {ip}")
 
+        # Ejecutar nmap
         nmap_output = run_nmap(ip)
 
-        if "ERROR" in nmap_output or "TIMEOUT" in nmap_output:
+        if "ERROR" in nmap_output:
             print(f"   ⚠️ nmap falló: {nmap_output[:100]}")
-            print("   Generando resultado básico sin escaneo profundo...")
-            parsed = {"ip": ip, "puertos_abiertos": [], "os_detected": "Timeout/Error", "resumen": "Escaneo de nmap no disponible"}
+            parsed = {
+                "ip": ip,
+                "puertos_abiertos": [],
+                "os_detected": "Error en escaneo",
+                "resumen": f"Escaneo no disponible: {nmap_output}"
+            }
         else:
             print("   🤖 Parseando output con IA...")
             parsed = parsear_nmap_con_ia(ip, nmap_output)
@@ -172,49 +254,46 @@ def run_agent():
             "ssl_tls_services": parsed.get("ssl_tls_services", []),
             "security_issues": parsed.get("security_issues", []),
             "resumen": parsed.get("resumen", ""),
-            "timestamp": datetime.now(UTC).isoformat()    
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
-        output_path = os.path.join(
-            os.path.dirname(__file__), "..", "shared_data", "ag2.json"
-        )
+        output_path = os.path.join(shared_dir, "ag2.json")
+        os.makedirs(shared_dir, exist_ok=True)
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(resultado, f, indent=2, ensure_ascii=False)
 
-        print(f"\n   ✅ Listo. Guardado en shared_data/ag2.json")
+        print(f"\n   ✅ Listo. Guardado en {output_path}")
         print(f"   📊 Resumen:")
+        print(f"      Target: {target}")
         print(f"      IP: {ip}")
         print(f"      OS: {resultado['os_detected']}")
         print(f"      Puertos abiertos: {len(resultado['services'])}")
-        
+
         fw_data = resultado.get('firewall_ids_detection', {})
         if fw_data.get('firewall_present'):
             print(f"      🔥 Firewall detectado: {fw_data.get('evidence', 'Sí')}")
         if fw_data.get('ids_ips_detected'):
             print(f"      🚨 IDS/IPS detectado")
-        
         ssl_services = resultado.get('ssl_tls_services', [])
         if ssl_services:
             print(f"      🔐 Servicios SSL/TLS: {len(ssl_services)}")
-        
         issues = resultado.get('security_issues', [])
         if issues:
             print(f"      ⚠️ Issues de seguridad: {len(issues)}")
-        
+
         for s in resultado["services"][:5]:
-            print(f"        → {s['port']}/{s['protocol']} {s['service']} {s.get('version','')}")
+            banner = s.get('banner', s.get('version', ''))
+            print(f"        → {s['port']}/{s['protocol']} {s['service']} {banner}")
         if len(resultado["services"]) > 5:
             print(f"        ... y {len(resultado['services'])-5} más")
 
         return resultado
-    
+
     except Exception as e:
-        # Fallback: generar ag2.json con error para no bloquear el pipeline
         print(f"   ❌ Error en AG2: {str(e)}")
-        
         resultado = {
-            "target": "desconocido",
-            "ip": "error",
+            "target": target if 'target' in locals() else "desconocido",
+            "ip": ip if 'ip' in locals() else "error",
             "services": [],
             "os_detected": "error",
             "firewall_ids_detection": {},
@@ -224,16 +303,12 @@ def run_agent():
             "timestamp": datetime.now(UTC).isoformat(),
             "error": str(e)
         }
-        
-        output_path = os.path.join(
-            os.path.dirname(__file__), "..", "shared_data", "ag2.json"
-        )
+        output_path = os.path.join(shared_dir, "ag2.json")
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(resultado, f, indent=2, ensure_ascii=False)
-        
-        print(f"   📁 Error JSON guardado en shared_data/ag2.json")
-        raise
+        print(f"   📁 Error JSON guardado en {output_path}")
+        return resultado
 
 if __name__ == "__main__":
     run_agent()
