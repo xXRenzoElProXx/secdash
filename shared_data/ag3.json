@@ -1,70 +1,112 @@
 {
   "target": "google.com",
-  "ip": "142.251.0.139",
+  "ip": "142.251.129.206",
   "activos_criticos": [
     {
-      "nombre": "HTTPS en puerto 443",
+      "nombre": "SSH en puerto 22",
       "tipo": "servicio",
-      "riesgo": "bajo",
-      "razon": "Servicio esperado y necesario, gestionado por Google Web Server (gws) con infraestructura de clase mundial. TLS 1.3 con cifrado fuerte."
+      "riesgo": "alto",
+      "razon": "OpenSSH 6.6.1p1 (2014) con múltiples CVEs sin parchear y autenticación por contraseña habilitada, expuesto a internet"
     },
     {
-      "nombre": "HTTP en puerto 80",
+      "nombre": "Apache HTTP en puerto 80",
+      "tipo": "servicio",
+      "riesgo": "alto",
+      "razon": "Apache httpd 2.4.7 es versión EOL (End of Life) con vulnerabilidades conocidas explotables, sin HTTPS (puerto 443 ausente)"
+    },
+    {
+      "nombre": "Puerto 31337/TCP",
+      "tipo": "servicio",
+      "riesgo": "alto",
+      "razon": "Puerto históricamente asociado a backdoors y troyanos (elite/31337), servicio tcpwrapped sin identificar, altamente sospechoso"
+    },
+    {
+      "nombre": "Nping echo en puerto 9929",
       "tipo": "servicio",
       "riesgo": "medio",
-      "razon": "Puerto estándar pero sin redirección forzada a HTTPS detectada. Potencial para ataques downgrade o interceptación."
+      "razon": "Servicio de utilidad que puede ser abusado para fingerprinting, exfiltración ICMP-like y amplificación"
     },
     {
-      "nombre": "Firewall con 998 puertos filtrados",
-      "tipo": "servicio",
-      "riesgo": "bajo",
-      "razon": "Configuración restrictiva correcta que minimiza superficie de ataque. Indica buena segmentación."
+      "nombre": "admin.google.com",
+      "tipo": "subdominio",
+      "riesgo": "medio",
+      "razon": "Subdominio administrativo que sugiere panel de gestión; superficie de ataque ampliada si apunta a infraestructura vulnerable"
     }
   ],
   "control_acceso": {
-    "modelo_detectado": "RBAC",
+    "modelo_detectado": "desconocido",
     "servicios_sin_autenticacion": [
-      "HTTP en puerto 80",
-      "HTTPS en puerto 443 (público)"
+      "http (puerto 80)",
+      "nping-echo (puerto 9929)"
     ],
-    "puertos_administrativos_expuestos": [],
+    "puertos_administrativos_expuestos": [
+      22,
+      31337
+    ],
     "recomendaciones_acl": [
-      "Forzar redirección HTTP → HTTPS para todos los recursos",
-      "Verificar que no existan servicios administrativos en puertos no estándar",
-      "Mantener firewall restrictivo con denegar por defecto"
+      "Restringir SSH (22) únicamente a IPs de administración mediante allowlist en firewall/iptables",
+      "Cerrar o filtrar puerto 31337 inmediatamente y bloquear en frontera perimetral",
+      "Implementar fail2ban o port knocking para SSH como capa adicional",
+      "Segmentar acceso administrativo en VLAN de gestión con NAC",
+      "Bloquear acceso externo a admin.google.com y permitir solo desde IPs corporativas"
     ]
   },
   "hardening_analysis": {
-    "servicios_innecesarios": [],
-    "protocolos_inseguros": [],
-    "falta_segmentacion": false,
+    "servicios_innecesarios": [
+      "telnet no presente pero SSH password auth habilitado (factorizar a publickey-only)",
+      "nping-echo en puerto 9929 (servicio de utilidad innecesario en producción)",
+      "puerto 31337/TCP sin servicio identificable (posible backdoor o servicio huérfano)",
+      "HTTP en puerto 80 sin redirección a HTTPS (tráfico en claro)"
+    ],
+    "protocolos_inseguros": [
+      "HTTP en texto plano (puerto 80 sin TLS)",
+      "SSH con autenticación password (vulnerable a fuerza bruta)",
+      "Ausencia total de TLS/SSL en servicios detectados",
+      "OpenSSH 6.6.1p1 con algoritmos legacy potencialmente habilitados (ssh-rsa, CBC ciphers)"
+    ],
+    "falta_segmentacion": true,
     "medidas_sugeridas": [
-      "Continuar con política de mínimo privilegio",
-      "Mantener actualización de certificados SSL/TLS",
-      "Revisar periódicamente configuración de firewall",
-      "Implementar HSTS (HTTP Strict Transport Security)"
+      "Actualizar OpenSSH a versión >= 9.0 y deshabilitar PasswordAuthentication forzando publickey + MFA",
+      "Actualizar Apache a 2.4.58+ o migrar a nginx, habilitando HTTPS con TLS 1.2/1.3 únicamente",
+      "Deshabilitar servicios innecesarios (nping-echo, puerto 31337) y bloquear a nivel de iptables/nftables",
+      "Aplicar configuración sysctl hardened: net.ipv4.tcp_syncookies=1, net.ipv4.conf.all.rp_filter=1, deshabilitar IP forwarding",
+      "Implementar SELinux o AppArmor en modo enforcing para Linux Ubuntu detectado",
+      "Configurar banners SSH personalizados que disuadan reconocimiento (legal warning)",
+      "Implementar WAF (ModSecurity) delante de Apache con reglas OWASP CRS",
+      "Aplicar banners de sistema operativo falsos y deshabilitar información de versión en Apache (ServerTokens Prod)"
     ]
   },
   "post_exploitation_vectors": [
-    "Si se comprometiera el puerto 80, un atacante podría intentar SSL stripping para interceptar credenciales",
-    "Movimiento lateral limitado debido a segmentación de red y firewall restrictivo",
-    "Escalamiento de privilegios improbable desde servicios públicos debido a arquitectura en capas"
+    "SSH con credenciales débiles y versión vulnerable permite acceso inicial con shell interactivo, lectura de /etc/shadow y persistencia vía authorized_keys",
+    "Apache 2.4.7 EOL permite RCE vía path traversal (CVE-2021-41773 no aplica, pero CVEs previos) y deserialización que derivan en ejecución de código bajo www-data",
+    "Puerto 31337 sin identificar puede ser backdoor preinstalada que otorgue shell sin autenticación al atacante (movimiento lateral trivial)",
+    "Ausencia de HTTPS permite captura de credenciales en tránsito si hay formularios de login en HTTP",
+    "Sin segmentación de red, un compromiso en Apache/SSH daría acceso directo a servicios internos sin pivoting adicional",
+    "Registro MX smtp.google.com y nameservers ns1-ns4 pueden ser objetivo de DNS poisoning/cache poisoning si no hay DNSSEC",
+    "Subdominio admin.google.com puede ser objetivo de credential stuffing contra cuentas corporativas",
+    "Falta de IDS/IPS significa que las acciones post-explotación no serían detectadas en tiempo real"
   ],
   "prioridad": [
-    "Forzar redirección HTTPS en puerto 80",
-    "Verificar configuración de HSTS",
-    "Mantener monitoreo de firewall"
+    "Puerto 31337/TCP abierto (backdoor probable) — cierre inmediato y forense",
+    "Apache 2.4.7 EOL y OpenSSH 6.6.1p1 obsoleto con password auth — parchear y deshabilitar password auth",
+    "Habilitar HTTPS y deshabilitar HTTP plano en puerto 80",
+    "Segmentar SSH a IPs internas y bloquear admin.google.com externamente"
   ],
   "vectores_de_ataque": [
-    "SSL stripping en conexiones HTTP no redirigidas",
-    "Reconocimiento pasivo de infraestructura mediante análisis de certificados",
-    "Ataques de ingeniería social aprovechando dominio de alto valor"
+    "Brute force / credential stuffing contra SSH (puerto 22) con autenticación por contraseña habilitada y versión vulnerable a user enumeration (CVE-2018-15473)",
+    "Explotación de Apache 2.4.7 EOL mediante vulnerabilidades conocidas como CVE-2017-15715, CVE-2019-0211 o mod_cgi bypass para RCE como www-data",
+    "Sniffing y modificación de tráfico HTTP en claro (puerto 80) mediante ataque MITM en red local",
+    "Investigación del puerto 31337/TCP para determinar si es backdoor activa (conexión directa, análisis de payload)",
+    "Ataque al servicio nping-echo (puerto 9929) para fingerprinting avanzado y potencial abuso como canal encubierto de exfiltración",
+    "Ataque de subdominio takeover contra admin.google.com si el registro DNS apunta a servicio cloud no reclamado",
+    "DNS cache poisoning contra nameservers ns1-ns4 si no implementan DNSSEC, permitiendo redirección de tráfico legítimo",
+    "Ataque de fuerza bruta contra cuentas de Google Workspace del dominio aprovechando falta de MFA visible"
   ],
-  "superficie_total": "Superficie de ataque externa extremadamente reducida y bien bastionada. Solo dos puertos TCP abiertos (80 y 443) con firewall restrictivo filtrando 998 puertos. TLS 1.3 con cifrado fuerte. Configuración de control de acceso robusta con modelo RBAC implícito. Excelente segmentación de red. Sin servicios innecesarios expuestos. Cumple con principio de mínimo privilegio y defensa en profundidad.",
-  "recomendacion_inmediata": "Implementar HSTS (HTTP Strict Transport Security) con preload y forzar redirección automática de HTTP a HTTPS para prevenir ataques de downgrade y SSL stripping. Aunque el riesgo general es bajo, esta medida adicional fortalecería la postura de seguridad criptográfica.",
+  "superficie_total": "Sistema con superficie de ataque CRÍTICA y múltiples anomalías: ejecuta stack LAMP obsoleto (Ubuntu + Apache 2.4.7 + OpenSSH 6.6.1p1) con versiones de hace ~10 años, presenta un puerto 31337 altamente sospechoso, carece completamente de cifrado TLS, no tiene IDS/IPS, y aunque tiene firewall perimetral (585 puertos filtrados), los servicios administrativos críticos quedan expuestos a internet. La discrepancia entre el dominio declarado (google.com) y la infraestructura observada sugiere entorno de honeypot o máquina deliberadamente vulnerable para pruebas; en cualquier caso, los hallazgos representan riesgo máximo y comprometen confidencialidad, integridad y disponibilidad.",
+  "recomendacion_inmediata": "Aislar el host de la red de producción inmediatamente, investigar forensemente el puerto 31337/TCP (probable backdoor o shell bind), capturar tráfico y memoria para análisis de malware, y comenzar hardening urgente parchando OpenSSH y Apache junto con deshabilitar la autenticación por contraseña y bloquear el acceso SSH externo hasta completar la remediación.",
   "fuentes": [
     "ag1.json",
     "ag2.json"
   ],
-  "timestamp": "2026-06-12T03:14:27.029451+00:00"
+  "timestamp": "2026-06-27T17:24:59.767014+00:00"
 }

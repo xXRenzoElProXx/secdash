@@ -1,421 +1,273 @@
 {
   "agent": "AG11_EXPLOIT_INTEL",
   "integrante": 4,
-  "target": "google.com",
-  "ip": "142.251.0.139",
-  "modo": "mock_demo",
+  "target": "scanme.nmap.org",
+  "modo": "real_apis",
   "recomendaciones": [
     {
-      "cve_id": "CVE-2024-SQLi-CRITICAL",
-      "servicio": "web-application",
-      "version": "google-web-app",
-      "puerto": 443,
-      "cvss_score": 9.8,
-      "severidad": "CRITICAL",
-      "modulo_msf": "exploit/multi/http/sql_injection_generic",
-      "probabilidad_exito": "alta",
-      "impacto": "critico",
-      "epss": {
-        "cve_id": "CVE-2024-SQLi-CRITICAL",
-        "epss_score": 0.89543,
-        "epss_percentile": 98.2,
-        "fecha_calculo": "2026-06-12",
-        "fuente": "MOCK"
-      },
-      "exploitdb": {
-        "edb_id": "EDB-51234",
-        "titulo": "Generic SQL Injection Exploit",
-        "tipo": "remote",
-        "plataforma": "multi",
-        "fecha": "2024-11-20",
-        "url": "https://www.exploit-db.com/exploits/51234",
-        "fuente": "MOCK"
-      },
-      "github_poc": {
-        "repositorio": "offensive-security/sqli-exploiter",
-        "estrellas": 2847,
-        "forks": 642,
-        "ultima_actualizacion": "2026-06-01",
-        "lenguaje": "Python",
-        "url": "https://github.com/offensive-security/sqli-exploiter",
-        "fuente": "MOCK"
-      },
-      "att_ck_tactics": [
-        {
-          "tactic_id": "TA0001",
-          "tactic_name": "Initial Access",
-          "techniques": ["T1190 - Exploit Public-Facing Application"]
-        },
-        {
-          "tactic_id": "TA0006",
-          "tactic_name": "Credential Access",
-          "techniques": ["T1552 - Unsecured Credentials"]
-        },
-        {
-          "tactic_id": "TA0009",
-          "tactic_name": "Collection",
-          "techniques": ["T1005 - Data from Local System"]
-        }
-      ],
-      "prioridad_parcheo": {
-        "score_total": 97.5,
-        "prioridad": "P0",
-        "descripcion": "CRÍTICO - Parchear inmediatamente (0-24h)",
-        "factores": [
-          "CVSS: 9.8/10 → 29.4 pts (30%)",
-          "EPSS: 89.5% → 22.4 pts (25%)",
-          "Exploit público: Sí → 20.0 pts (20%)",
-          "Criticidad servicio: Alta → 15.0 pts (15%)",
-          "Facilidad parcheo: Media → 7.0 pts (10%)"
-        ]
-      },
-      "mitigaciones": [
-        "Implementar Web Application Firewall (WAF) con reglas anti-SQLi",
-        "Usar consultas parametrizadas y prepared statements",
-        "Validar y sanitizar toda entrada de usuario (whitelist)",
-        "Aplicar principio de mínimo privilegio en DB",
-        "Deshabilitar mensajes de error detallados en producción",
-        "Implementar detección IDS/IPS para patrones SQLi"
-      ],
-      "nota": "CRÍTICO: SQLi permite extracción completa de BD. Exploit público activo. Parchear INMEDIATAMENTE."
-    },
-    {
-      "cve_id": "CVE-2024-BUFFER-OVERFLOW",
-      "servicio": "web-server",
+      "cve_id": "CVE-1999-1573",
+      "servicio": "tcpwrapped",
       "version": "unknown",
-      "puerto": 443,
-      "cvss_score": 9.0,
-      "severidad": "CRITICAL",
-      "modulo_msf": "exploit/linux/http/buffer_overflow_generic",
-      "probabilidad_exito": "alta",
-      "impacto": "critico",
+      "puerto": 31337,
+      "cvss_score": 10.0,
+      "severidad": "HIGH",
+      "modulo_msf": "No encontrado",
+      "probabilidad_exito": "baja",
+      "impacto": "high",
       "epss": {
-        "cve_id": "CVE-2024-BUFFER-OVERFLOW",
-        "epss_score": 0.12456,
-        "epss_percentile": 72.8,
-        "fecha_calculo": "2026-06-12",
-        "fuente": "MOCK"
+        "cve_id": "CVE-1999-1573",
+        "epss_score": 0.05056,
+        "epss_percentile": 91.237,
+        "fecha_calculo": "2026-06-27",
+        "fuente": "FIRST.org"
       },
-      "exploitdb": {
-        "edb_id": "EDB-51198",
-        "titulo": "HTTP Server Buffer Overflow Remote Exploit",
-        "tipo": "remote",
-        "plataforma": "linux",
-        "fecha": "2024-11-15",
-        "url": "https://www.exploit-db.com/exploits/51198",
-        "fuente": "MOCK"
-      },
-      "github_poc": {
-        "repositorio": "exploit-dev/bof-poc-2024",
-        "estrellas": 892,
-        "forks": 203,
-        "ultima_actualizacion": "2026-05-28",
-        "lenguaje": "C",
-        "url": "https://github.com/exploit-dev/bof-poc-2024",
-        "fuente": "MOCK"
-      },
+      "exploitdb": null,
+      "github_poc": null,
       "att_ck_tactics": [
-        {
-          "tactic_id": "TA0001",
-          "tactic_name": "Initial Access",
-          "techniques": ["T1190 - Exploit Public-Facing Application"]
-        },
-        {
-          "tactic_id": "TA0002",
-          "tactic_name": "Execution",
-          "techniques": ["T1203 - Exploitation for Client Execution"]
-        },
         {
           "tactic_id": "TA0004",
           "tactic_name": "Privilege Escalation",
-          "techniques": ["T1068 - Exploitation for Privilege Escalation"]
+          "techniques": [
+            "T1068 - Exploitation for Privilege Escalation"
+          ]
         }
       ],
       "prioridad_parcheo": {
-        "score_total": 82.1,
-        "prioridad": "P1",
-        "descripcion": "ALTO - Parchear en 24-48h",
+        "score_total": 47.3,
+        "prioridad": "P3",
+        "descripcion": "BAJO - Parchear en 30 días",
         "factores": [
-          "CVSS: 9.0/10 → 27.0 pts (30%)",
-          "EPSS: 12.5% → 3.1 pts (25%)",
-          "Exploit público: Sí → 20.0 pts (20%)",
-          "Criticidad servicio: Alta → 15.0 pts (15%)",
-          "Facilidad parcheo: Alta → 10.0 pts (10%)"
+          "CVSS: 10.0/10 → 30.0 pts",
+          "EPSS: 5.06% → 1.3 pts",
+          "Exploit público: No → 0 pts",
+          "Criticidad servicio: Otro (Media) → 8 pts",
+          "Facilidad parcheo: Parche disponible → 8 pts"
         ]
       },
       "mitigaciones": [
-        "Habilitar Data Execution Prevention (DEP)",
-        "Habilitar Address Space Layout Randomization (ASLR)",
-        "Compilar con stack canaries (-fstack-protector-all)",
-        "Limitar longitud máxima de inputs",
-        "Implementar validación de longitud de buffers",
-        "Actualizar a versión parchada del servidor web",
-        "Implementar IDS con firmas de buffer overflow"
+        "Actualizar tcpwrapped a versión segura",
+        "Aplicar principio de defensa en profundidad",
+        "Monitorear logs para detectar intentos de explotación"
       ],
-      "nota": "ZERO-DAY detectado. Exploit PoC público. Permite RCE. Activar controles mitigatorios mientras se prueba parche."
+      "nota": "Análisis multi-fuente completado. Prioridad: P3"
     },
     {
-      "cve_id": "CVE-2024-XSS-REFLECTED",
-      "servicio": "web-application",
-      "version": "google-web-app",
-      "puerto": 443,
-      "cvss_score": 6.1,
-      "severidad": "MEDIUM",
-      "modulo_msf": "auxiliary/scanner/http/xss_scanner",
-      "probabilidad_exito": "media",
-      "impacto": "medio",
-      "epss": {
-        "cve_id": "CVE-2024-XSS-REFLECTED",
-        "epss_score": 0.04231,
-        "epss_percentile": 45.6,
-        "fecha_calculo": "2026-06-12",
-        "fuente": "MOCK"
-      },
-      "exploitdb": {
-        "edb_id": "EDB-50987",
-        "titulo": "Reflected XSS in Search Parameter",
-        "tipo": "remote",
-        "plataforma": "multi",
-        "fecha": "2024-10-05",
-        "url": "https://www.exploit-db.com/exploits/50987",
-        "fuente": "MOCK"
-      },
-      "github_poc": {
-        "repositorio": "xss-hunters/reflected-xss-demo",
-        "estrellas": 421,
-        "forks": 89,
-        "ultima_actualizacion": "2026-04-12",
-        "lenguaje": "JavaScript",
-        "url": "https://github.com/xss-hunters/reflected-xss-demo",
-        "fuente": "MOCK"
-      },
-      "att_ck_tactics": [
-        {
-          "tactic_id": "TA0001",
-          "tactic_name": "Initial Access",
-          "techniques": ["T1189 - Drive-by Compromise"]
-        },
-        {
-          "tactic_id": "TA0006",
-          "tactic_name": "Credential Access",
-          "techniques": ["T1056.003 - Web Portal Capture"]
-        }
-      ],
-      "prioridad_parcheo": {
-        "score_total": 62.8,
-        "prioridad": "P2",
-        "descripcion": "MEDIO - Parchear en 7 días",
-        "factores": [
-          "CVSS: 6.1/10 → 18.3 pts (30%)",
-          "EPSS: 4.2% → 1.1 pts (25%)",
-          "Exploit público: Sí → 20.0 pts (20%)",
-          "Criticidad servicio: Alta → 15.0 pts (15%)",
-          "Facilidad parcheo: Alta → 10.0 pts (10%)"
-        ]
-      },
-      "mitigaciones": [
-        "Implementar Content Security Policy (CSP) estricto",
-        "Sanitizar HTML en salida (escape <, >, \", ', &)",
-        "Usar HttpOnly y Secure flags en cookies",
-        "Validar y codificar inputs antes de reflejar en HTML",
-        "Implementar X-XSS-Protection header",
-        "Usar frameworks con protección XSS integrada"
-      ],
-      "nota": "XSS Reflected permite robo de sesiones. Requiere ingeniería social. Implementar CSP como mitigación temporal."
-    },
-    {
-      "cve_id": "CVE-2024-GWS-001",
-      "servicio": "http",
-      "version": "gws",
-      "puerto": 80,
-      "cvss_score": 5.3,
-      "severidad": "MEDIUM",
+      "cve_id": "CVE-1999-1584",
+      "servicio": "tcpwrapped",
+      "version": "unknown",
+      "puerto": 31337,
+      "cvss_score": 10.0,
+      "severidad": "HIGH",
       "modulo_msf": "No encontrado",
       "probabilidad_exito": "baja",
-      "impacto": "medio",
+      "impacto": "high",
       "epss": {
-        "cve_id": "CVE-2024-GWS-001",
-        "epss_score": 0.01234,
-        "epss_percentile": 28.3,
-        "fecha_calculo": "2026-06-12",
-        "fuente": "MOCK"
+        "cve_id": "CVE-1999-1584",
+        "epss_score": 0.01446,
+        "epss_percentile": 70.001,
+        "fecha_calculo": "2026-06-27",
+        "fuente": "FIRST.org"
       },
-      "exploitdb": {
-        "edb_id": null,
-        "titulo": "No encontrado",
-        "tipo": null,
-        "plataforma": null,
-        "fecha": null,
-        "url": null,
-        "fuente": "MOCK"
+      "exploitdb": null,
+      "github_poc": null,
+      "att_ck_tactics": [
+        {
+          "tactic_id": "TA0004",
+          "tactic_name": "Privilege Escalation",
+          "techniques": [
+            "T1068 - Exploitation for Privilege Escalation"
+          ]
+        }
+      ],
+      "prioridad_parcheo": {
+        "score_total": 46.4,
+        "prioridad": "P3",
+        "descripcion": "BAJO - Parchear en 30 días",
+        "factores": [
+          "CVSS: 10.0/10 → 30.0 pts",
+          "EPSS: 1.45% → 0.4 pts",
+          "Exploit público: No → 0 pts",
+          "Criticidad servicio: Otro (Media) → 8 pts",
+          "Facilidad parcheo: Parche disponible → 8 pts"
+        ]
       },
-      "github_poc": {
-        "repositorio": null,
-        "estrellas": 0,
-        "forks": 0,
-        "ultima_actualizacion": null,
-        "lenguaje": null,
-        "url": null,
-        "fuente": "MOCK"
+      "mitigaciones": [
+        "Actualizar tcpwrapped a versión segura",
+        "Aplicar principio de defensa en profundidad",
+        "Monitorear logs para detectar intentos de explotación"
+      ],
+      "nota": "Análisis multi-fuente completado. Prioridad: P3"
+    },
+    {
+      "cve_id": "CVE-1999-1589",
+      "servicio": "tcpwrapped",
+      "version": "unknown",
+      "puerto": 31337,
+      "cvss_score": 7.2,
+      "severidad": "HIGH",
+      "modulo_msf": "No encontrado",
+      "probabilidad_exito": "baja",
+      "impacto": "high",
+      "epss": {
+        "cve_id": "CVE-1999-1589",
+        "epss_score": 0.00333,
+        "epss_percentile": 25.117,
+        "fecha_calculo": "2026-06-27",
+        "fuente": "FIRST.org"
       },
+      "exploitdb": null,
+      "github_poc": null,
+      "att_ck_tactics": [
+        {
+          "tactic_id": "TA0004",
+          "tactic_name": "Privilege Escalation",
+          "techniques": [
+            "T1068 - Exploitation for Privilege Escalation"
+          ]
+        }
+      ],
+      "prioridad_parcheo": {
+        "score_total": 37.7,
+        "prioridad": "P3",
+        "descripcion": "BAJO - Parchear en 30 días",
+        "factores": [
+          "CVSS: 7.2/10 → 21.6 pts",
+          "EPSS: 0.33% → 0.1 pts",
+          "Exploit público: No → 0 pts",
+          "Criticidad servicio: Otro (Media) → 8 pts",
+          "Facilidad parcheo: Parche disponible → 8 pts"
+        ]
+      },
+      "mitigaciones": [
+        "Actualizar tcpwrapped a versión segura",
+        "Aplicar principio de defensa en profundidad",
+        "Monitorear logs para detectar intentos de explotación"
+      ],
+      "nota": "Análisis multi-fuente completado. Prioridad: P3"
+    },
+    {
+      "cve_id": "CVE-2000-0247",
+      "servicio": "tcpwrapped",
+      "version": "unknown",
+      "puerto": 31337,
+      "cvss_score": 7.2,
+      "severidad": "HIGH",
+      "modulo_msf": "No encontrado",
+      "probabilidad_exito": "baja",
+      "impacto": "high",
+      "epss": {
+        "cve_id": "CVE-2000-0247",
+        "epss_score": 0.00349,
+        "epss_percentile": 26.867,
+        "fecha_calculo": "2026-06-27",
+        "fuente": "FIRST.org"
+      },
+      "exploitdb": null,
+      "github_poc": null,
+      "att_ck_tactics": [
+        {
+          "tactic_id": "TA0004",
+          "tactic_name": "Privilege Escalation",
+          "techniques": [
+            "T1068 - Exploitation for Privilege Escalation"
+          ]
+        }
+      ],
+      "prioridad_parcheo": {
+        "score_total": 37.7,
+        "prioridad": "P3",
+        "descripcion": "BAJO - Parchear en 30 días",
+        "factores": [
+          "CVSS: 7.2/10 → 21.6 pts",
+          "EPSS: 0.35% → 0.1 pts",
+          "Exploit público: No → 0 pts",
+          "Criticidad servicio: Otro (Media) → 8 pts",
+          "Facilidad parcheo: Parche disponible → 8 pts"
+        ]
+      },
+      "mitigaciones": [
+        "Actualizar tcpwrapped a versión segura",
+        "Aplicar principio de defensa en profundidad",
+        "Monitorear logs para detectar intentos de explotación"
+      ],
+      "nota": "Análisis multi-fuente completado. Prioridad: P3"
+    },
+    {
+      "cve_id": "CVE-2000-1003",
+      "servicio": "tcpwrapped",
+      "version": "unknown",
+      "puerto": 31337,
+      "cvss_score": 2.6,
+      "severidad": "LOW",
+      "modulo_msf": "No encontrado",
+      "probabilidad_exito": "baja",
+      "impacto": "low",
+      "epss": {
+        "cve_id": "CVE-2000-1003",
+        "epss_score": 0.12513,
+        "epss_percentile": 95.723,
+        "fecha_calculo": "2026-06-27",
+        "fuente": "FIRST.org"
+      },
+      "exploitdb": null,
+      "github_poc": null,
       "att_ck_tactics": [
         {
           "tactic_id": "TA0001",
           "tactic_name": "Initial Access",
-          "techniques": ["T1190 - Exploit Public-Facing Application"]
+          "techniques": [
+            "T1190 - Exploit Public-Facing Application"
+          ]
         },
         {
-          "tactic_id": "TA0009",
-          "tactic_name": "Collection",
-          "techniques": ["T1040 - Network Sniffing"]
+          "tactic_id": "TA0040",
+          "tactic_name": "Impact",
+          "techniques": [
+            "T1499 - Endpoint Denial of Service"
+          ]
         }
       ],
       "prioridad_parcheo": {
-        "score_total": 48.4,
-        "prioridad": "P3",
-        "descripcion": "BAJO - Parchear en 30 días",
+        "score_total": 26.9,
+        "prioridad": "P4",
+        "descripcion": "MÍNIMO - Parchear en próximo ciclo",
         "factores": [
-          "CVSS: 5.3/10 → 15.9 pts (30%)",
-          "EPSS: 1.2% → 0.3 pts (25%)",
-          "Exploit público: No → 0.0 pts (20%)",
-          "Criticidad servicio: Alta → 15.0 pts (15%)",
-          "Facilidad parcheo: Alta → 10.0 pts (10%)"
+          "CVSS: 2.6/10 → 7.8 pts",
+          "EPSS: 12.51% → 3.1 pts",
+          "Exploit público: No → 0 pts",
+          "Criticidad servicio: Otro (Media) → 8 pts",
+          "Facilidad parcheo: Parche disponible → 8 pts"
         ]
       },
       "mitigaciones": [
-        "Forzar redirección HTTP → HTTPS (301/302)",
-        "Implementar HSTS (HTTP Strict Transport Security)",
-        "Incluir sitio en HSTS Preload List",
-        "Deshabilitar puerto 80 si no es necesario",
-        "Configurar firewall para bloquear HTTP externo"
+        "Actualizar tcpwrapped a versión segura",
+        "Aplicar principio de defensa en profundidad",
+        "Monitorear logs para detectar intentos de explotación"
       ],
-      "nota": "Downgrade attack teórico. Sin exploit público. Bajo riesgo práctico. Implementar HSTS como best practice."
-    },
-    {
-      "cve_id": "CVE-2024-TLS-HSTS",
-      "servicio": "ssl/https",
-      "version": "gws",
-      "puerto": 443,
-      "cvss_score": 4.3,
-      "severidad": "MEDIUM",
-      "modulo_msf": "auxiliary/scanner/http/ssl_strip",
-      "probabilidad_exito": "baja",
-      "impacto": "medio",
-      "epss": {
-        "cve_id": "CVE-2024-TLS-HSTS",
-        "epss_score": 0.00812,
-        "epss_percentile": 18.7,
-        "fecha_calculo": "2026-06-12",
-        "fuente": "MOCK"
-      },
-      "exploitdb": {
-        "edb_id": null,
-        "titulo": "No encontrado",
-        "tipo": null,
-        "plataforma": null,
-        "fecha": null,
-        "url": null,
-        "fuente": "MOCK"
-      },
-      "github_poc": {
-        "repositorio": "sslstrip-demo/mitm-toolkit",
-        "estrellas": 156,
-        "forks": 32,
-        "ultima_actualizacion": "2025-12-08",
-        "lenguaje": "Python",
-        "url": "https://github.com/sslstrip-demo/mitm-toolkit",
-        "fuente": "MOCK"
-      },
-      "att_ck_tactics": [
-        {
-          "tactic_id": "TA0006",
-          "tactic_name": "Credential Access",
-          "techniques": ["T1557 - Man-in-the-Middle"]
-        },
-        {
-          "tactic_id": "TA0009",
-          "tactic_name": "Collection",
-          "techniques": ["T1040 - Network Sniffing"]
-        }
-      ],
-      "prioridad_parcheo": {
-        "score_total": 42.6,
-        "prioridad": "P3",
-        "descripcion": "BAJO - Parchear en 30 días",
-        "factores": [
-          "CVSS: 4.3/10 → 12.9 pts (30%)",
-          "EPSS: 0.8% → 0.2 pts (25%)",
-          "Exploit público: Parcial → 10.0 pts (20%)",
-          "Criticidad servicio: Alta → 15.0 pts (15%)",
-          "Facilidad parcheo: Alta → 10.0 pts (10%)"
-        ]
-      },
-      "mitigaciones": [
-        "Añadir header HSTS con max-age=31536000",
-        "Incluir subdomains en HSTS (includeSubDomains)",
-        "Registrar dominio en HSTS Preload List de navegadores",
-        "Implementar Certificate Transparency (CT)",
-        "Configurar HPKP (HTTP Public Key Pinning) si aplica"
-      ],
-      "nota": "SSL stripping en primera conexión. Requiere MitM. Bajo riesgo con usuarios educados. HSTS preload resuelve permanentemente."
+      "nota": "Análisis multi-fuente completado. Prioridad: P4"
     }
   ],
   "resumen": {
     "total_cves": 5,
-    "con_modulo_msf": 4,
-    "con_exploitdb": 3,
-    "con_github_poc": 4,
-    "sin_exploit_publico": 1,
-    "alta_probabilidad": 2,
-    "media_probabilidad": 1,
-    "baja_probabilidad": 2,
-    "prioridad_p0": 1,
-    "prioridad_p1": 1,
-    "prioridad_p2": 1,
-    "prioridad_p3": 2,
-    "prioridad_p4": 0
+    "con_modulo_msf": 0,
+    "con_exploitdb": 0,
+    "con_github_poc": 0,
+    "sin_exploit_publico": 5,
+    "alta_probabilidad": 0,
+    "media_probabilidad": 0,
+    "baja_probabilidad": 5,
+    "prioridad_p0": 0,
+    "prioridad_p1": 0,
+    "prioridad_p2": 0,
+    "prioridad_p3": 4
   },
   "fuentes_consultadas": [
     "Metasploit Framework",
-    "EPSS - FIRST.org (MOCK)",
-    "ExploitDB (MOCK)",
-    "GitHub PoC Search (MOCK)",
-    "MITRE ATT&CK Framework"
+    "EPSS - FIRST.org",
+    "ExploitDB",
+    "GitHub PoC Search",
+    "MITRE ATT&CK"
   ],
-  "analisis_prioridades": {
-    "p0_critico": {
-      "cves": ["CVE-2024-SQLi-CRITICAL"],
-      "accion": "Parchear INMEDIATAMENTE (0-24h)",
-      "justificacion": "Exploit público activo + Alta probabilidad EPSS + Impacto crítico"
-    },
-    "p1_alto": {
-      "cves": ["CVE-2024-BUFFER-OVERFLOW"],
-      "accion": "Parchear en 24-48h",
-      "justificacion": "Zero-day con PoC público + RCE posible"
-    },
-    "p2_medio": {
-      "cves": ["CVE-2024-XSS-REFLECTED"],
-      "accion": "Parchear en 7 días",
-      "justificacion": "Exploit público pero requiere ingeniería social"
-    },
-    "p3_bajo": {
-      "cves": ["CVE-2024-GWS-001", "CVE-2024-TLS-HSTS"],
-      "accion": "Parchear en 30 días",
-      "justificacion": "Sin exploit público o requiere condiciones específicas (MitM)"
-    }
-  },
-  "att_ck_summary": {
-    "total_tactics": 6,
-    "total_techniques": 10,
-    "most_common_tactic": "TA0001 - Initial Access (5 CVEs)",
-    "tactics_coverage": [
-      "TA0001 - Initial Access",
-      "TA0002 - Execution",
-      "TA0004 - Privilege Escalation",
-      "TA0006 - Credential Access",
-      "TA0009 - Collection"
-    ]
-  },
-  "disclaimer": "⚠️ SOLO PARA FINES EDUCATIVOS Y AUTORIZACIÓN PREVIA. Uso de exploits sin permiso es ILEGAL. Datos EPSS, ExploitDB y GitHub son MOCK para demostración.",
-  "timestamp": "2026-06-12T05:15:00.000000+00:00"
+  "disclaimer": "⚠️ SOLO ANÁLISIS TEÓRICO. NUNCA ejecutar exploits sin autorización explícita por escrito. Este reporte es únicamente para evaluación de riesgo y priorización de parches.",
+  "timestamp": "2026-06-27T17:27:12.246584+00:00"
 }

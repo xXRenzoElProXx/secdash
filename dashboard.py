@@ -1161,7 +1161,7 @@ try:
     chat_ai = OpenAI(
         base_url=base_url,
         api_key=api_key,
-        timeout=Timeout(5.0, connect=5.0),
+        timeout=Timeout(120.0, connect=5.0),
     )
     chat_ai.models.list()
     chat_available = True

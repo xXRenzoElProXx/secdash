@@ -1,57 +1,59 @@
 {
   "target": "google.com",
-  "ip": "142.251.0.139",
+  "ip": "142.251.129.206",
   "dns": {
     "A": [
-      "108.177.123.100",
-      "108.177.123.113",
-      "108.177.123.102",
-      "108.177.123.138",
-      "108.177.123.139",
-      "108.177.123.101"
+      "142.251.129.206"
     ],
     "MX": [
-      "0 errdomain."
+      "10 smtp.google.com."
     ],
     "NS": [
-      "ns3.google.com.",
       "ns2.google.com.",
+      "ns4.google.com.",
       "ns1.google.com.",
-      "ns4.google.com."
+      "ns3.google.com."
     ],
     "TXT": [
+      "\"docusign=1b0a6754-49b1-4db5-8540-d2c12664b289\"",
       "\"docusign=05958488-4752-4ef2-95eb-aa7ba8a3bd0e\"",
       "\"globalsign-smime-dv=CDYX+XFHUw2wml6/Gb8+59BsH31KzUr6c1l2BPvqKX8=\"",
-      "\"facebook-domain-verification=22rm551cu4k0ab0bxsw536tlds4h95\"",
-      "\"docusign=1b0a6754-49b1-4db5-8540-d2c12664b289\"",
       "\"cisco-ci-domain-verification=47c38bc8c4b74b7233e9053220c1bbe76bcc1cd33c7acf7acd36cd6a5332004b\"",
-      "\"apple-domain-verification=30afIBcvSuDV2PLX\"",
-      "\"MS=E4A68B9AB2BB9670BCE15412F62916164C0B20BB\"",
+      "\"onetrust-domain-verification=6d685f1d41a94696ad7ef771f68993e0\"",
       "\"v=spf1 include:_spf.google.com ~all\"",
       "\"google-site-verification=TV9-DBe4R80X4v0M4U_bd_J9cpOJM0nikft0jAgjmsQ\"",
-      "\"google-site-verification=wD8N7i1JTNTkezJ49swvWW48f8_9xveREV4oB-0Hf5o\"",
-      "\"google-site-verification=4ibFUgB-wXLQ_S7vsXVomSTVamuOXBiVAzpR5IZ87D0\"",
+      "\"MS=E4A68B9AB2BB9670BCE15412F62916164C0B20BB\"",
+      "\"apple-domain-verification=30afIBcvSuDV2PLX\"",
+      "\"facebook-domain-verification=22rm551cu4k0ab0bxsw536tlds4h95\"",
       "\"onetrust-domain-verification=0d477fe608074e6f9c12bca7826035cc\"",
-      "\"onetrust-domain-verification=6d685f1d41a94696ad7ef771f68993e0\""
+      "\"google-site-verification=wD8N7i1JTNTkezJ49swvWW48f8_9xveREV4oB-0Hf5o\"",
+      "\"Z29vZ2xl\"",
+      "\"google-site-verification=4ibFUgB-wXLQ_S7vsXVomSTVamuOXBiVAzpR5IZ87D0\""
     ]
   },
   "subdominios": [
-    "TIMEOUT"
+    "www.google.com",
+    "mail.google.com",
+    "admin.google.com",
+    "ns1.google.com",
+    "ns2.google.com"
   ],
   "whois_registrar": "MarkMonitor Inc.",
   "analisis_ia": {
     "observaciones": [
-      "Dominio de alto valor (google.com) registrado a través de MarkMonitor, registrador premium especializado en protección de marca",
-      "Infraestructura DNS autoritativa en servidores propios de Google (ns1-ns4.google.com), indicando control total del DNS",
-      "Múltiples registros A (6 IPs) en el rango 108.177.123.0/24, consistente con redundancia y balanceo de carga de Google",
-      "Registro SPF configurado correctamente con include:_spf.google.com y política ~all (softfail)",
-      "Presencia de verificaciones de dominio de terceros (DocuSign, Facebook, Cisco, Apple, OneTrust, Google) que validan propiedad legítima",
-      "El registro MX muestra 'errdomain.' lo cual parece un artefacto de error en la consulta o configuración anómala; no es el comportamiento esperado para google.com",
-      "El escaneo de subdominios agotó el tiempo de espera (TIMEOUT), lo que podría indicar restricciones anti-enumeración o alta volumetría"
+      "Dominio de marca reconocida globalmente con protección de marca empresarial (MarkMonitor)",
+      "Registros DNS correctamente configurados con SPF válido y mecanismo ~all (soft fail)",
+      "Múltiples verificaciones de dominio legítimas (Google, Facebook, Apple, Cisco, DocuSign, OneTrust) indican uso corporativo legítimo",
+      "Nameservers autoritativos gestionados por la propia organización (ns1-ns4.google.com)",
+      "Subdominios descubiertos son estándar y esperados para la infraestructura de Google",
+      "Registro MX apunta a smtp.google.com, consistente con Google Workspace",
+      "No se observan subdominios anómalos o sospechosos (sin vpn, staging, dev, test expuestos)"
     ],
     "riesgo_exposicion": "bajo",
-    "razon_riesgo": "Se trata del dominio google.com, uno de los activos digitales más protegidos y monitorizados a nivel mundial. Utiliza un registrador premium de protección de marca, infraestructura DNS propia, múltiples verificaciones de terceros y registros SPF configurados. No se observan vectores de exposición evidentes.",
-    "subdominios_criticos": []
+    "razon_riesgo": "Infraestructura madura con protección de marca premium (MarkMonitor), DNS bien configurado, subdominios limitados a los estándar del servicio y sin exposición de servicios administrativos o de desarrollo inseguros.",
+    "subdominios_criticos": [
+      "admin.google.com"
+    ]
   },
-  "timestamp": "2026-06-08T03:12:27.203163+00:00"
+  "timestamp": "2026-06-27T17:22:31.153158+00:00"
 }

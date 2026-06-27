@@ -1,43 +1,56 @@
 {
-  "target": "google.com",
-  "ip": "142.251.0.139",
+  "target": "scanme.nmap.org",
+  "ip": "45.33.32.156",
   "services": [
+    {
+      "port": 22,
+      "protocol": "tcp",
+      "state": "open",
+      "service": "ssh",
+      "version": "OpenSSH 6.6.1p1 Ubuntu 2ubuntu2.13",
+      "banner": "SSH-2.0-OpenSSH_6.6.1p1 Ubuntu-2ubuntu2.13"
+    },
     {
       "port": 80,
       "protocol": "tcp",
       "state": "open",
       "service": "http",
-      "version": "gws",
-      "banner": "gws"
+      "version": "Apache httpd 2.4.7 (Ubuntu)",
+      "banner": "Apache/2.4.7 (Ubuntu)"
     },
     {
-      "port": 443,
+      "port": 9929,
       "protocol": "tcp",
       "state": "open",
-      "service": "ssl/https",
-      "version": "gws",
-      "banner": "gws"
+      "service": "nping-echo",
+      "version": "Nping echo",
+      "banner": "Nping echo (binary payload)"
+    },
+    {
+      "port": 31337,
+      "protocol": "tcp",
+      "state": "open",
+      "service": "tcpwrapped",
+      "version": "unknown",
+      "banner": "tcpwrapped (no banner retrieved)"
     }
   ],
-  "os_detected": "Linux 4.x (probablemente servidor Google)",
+  "os_detected": "Linux (no exact match; guesses: Oracle Virtualbox Slirp NAT bridge 92%, QEMU user mode gateway 88%, AT&T BGW210 voice gateway 89%)",
   "firewall_ids_detection": {
     "firewall_present": true,
     "ids_ips_detected": false,
-    "filtered_ports": 998,
-    "evidence": "998 puertos TCP filtrados detectados, sugiere presencia de firewall restrictivo"
+    "filtered_ports": 585,
+    "evidence": "585 puertos TCP filtrados (no-response) y 411 puertos cerrados (reset); comportamiento consistente con un firewall de filtrado masivo, sin evidencia clara de IDS/IPS activo"
   },
-  "ssl_tls_services": [
-    {
-      "port": 443,
-      "protocol": "TLSv1.3",
-      "cipher": "AES128-GCM-SHA256",
-      "certificate_valid": true
-    }
-  ],
+  "ssl_tls_services": [],
   "security_issues": [
-    "Puerto 80 (HTTP) expuesto sin redirección forzada a HTTPS",
-    "No se detectaron issues críticos - configuración robusta"
+    "SSH con autenticación por contraseña habilitada (método password soportado además de publickey)",
+    "OpenSSH 6.6.1p1 es una versión antigua (2014) con múltiples CVEs conocidos sin parchear",
+    "Apache httpd 2.4.7 es una versión obsoleta con vulnerabilidades conocidas (EOL)",
+    "Puerto 31337/TCP abierto: puerto asociado históricamente a backdoors y troyanos (servicio tcpwrapped sin identificar)",
+    "Ausencia de HTTPS (puerto 443 no habilitado): tráfico HTTP en texto plano expuesto",
+    "Ausencia de servicios TLS/SSL: no se detectaron servicios cifrados"
   ],
-  "resumen": "Servidor de Google (cj-in-f139.1e100.net) con puertos 80 (HTTP) y 443 (HTTPS) abiertos, ambos ejecutando gws (Google Web Server). 998 puertos TCP filtrados indicando presencia de firewall. TLS 1.3 con cifrado fuerte (AES128-GCM-SHA256). Certificado válido. Configuración de seguridad robusta con CSP, X-Frame-Options SAMEORIGIN y headers de seguridad apropiados.",
-  "timestamp": "2026-06-12T03:13:59.449849+00:00"
+  "resumen": "Host 45.33.32.156 (scanme.nmap.org) con 4 puertos TCP abiertos: SSH (22) con versión antigua, HTTP (80) con Apache obsoleto, nping-echo (9929) y un servicio tcpwrapped sospechoso en 31337. Se identificaron 585 puertos filtrados, lo que indica la presencia de un firewall. OS no detectado con exactitud (entorno virtualizado, Linux). No se detectaron servicios TLS. Múltiples problemas de seguridad por versiones desactualizadas y autenticación débil.",
+  "timestamp": "2026-06-27T17:19:07.857953+00:00"
 }

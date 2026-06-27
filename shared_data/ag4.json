@@ -1,7 +1,6 @@
 {
   "agente": "Agente 04 - Web Vulnerability",
-  "target": "google.com",
-  "url_escaneada": "http://142.251.0.139",
+  "url_escaneada": "http://142.251.129.206",
   "herramienta": "nikto",
   "modo": "mock",
   "hallazgos": [
@@ -9,60 +8,45 @@
       "id": "NIKTO-001",
       "descripcion": "X-Frame-Options header is not present",
       "severidad": "LOW",
-      "url_afectada": "http://142.251.0.139",
-      "evidencia": "Cabecera X-Frame-Options ausente"
+      "url_afectada": "http://142.251.129.206",
+      "evidencia": "Cabecera X-Frame-Options ausente",
+      "analisis_ia": {
+        "error": "No se proporcionaron datos de vulnerabilidad para analizar",
+        "detalle": {
+          "vulnerabilidad_recibida": "",
+          "url_recibida": ""
+        },
+        "contexto_tecnico": "La solicitud no contiene información sobre una vulnerabilidad específica detectada por Nikto. Nikto es un escáner de servidores web de código abierto que realiza pruebas exhaustivas contra servidores web, incluyendo verificaciones de más de 6700 archivos/programas potencialmente peligrosos, versiones desactualizadas, problemas específicos de versión y configuraciones del servidor.",
+        "impacto_potencial": "Sin información de la vulnerabilidad específica, no es posible determinar el impacto. Para futuras consultas, proporcione el ID de Nikto (ej: OSVDB-XXXX, CVE-XXXX-XXXX), la descripción del hallazgo y la URL afectada.",
+        "mitigacion_recomendada": "Para obtener un análisis significativo, proporcione los siguientes datos del reporte de Nikto: 1) El identificador de la vulnerabilidad (OSVDB/CVE), 2) La URL afectada, 3) La descripción completa del hallazgo, 4) El método HTTP utilizado en la prueba, 5) El código de respuesta del servidor.",
+        "prioridad_correccion": "N/A",
+        "categoria_cwe": "N/A",
+        "formato_esperado_entrada": {
+          "ejemplo": {
+            "vulnerabilidad": "OSVDB-3092: /admin/ - This might be interesting...",
+            "url": "/admin/"
+          }
+        }
+      }
     },
     {
       "id": "NIKTO-002",
       "descripcion": "Directory indexing found",
       "severidad": "MEDIUM",
-      "url_afectada": "http://142.251.0.139/uploads/",
-      "evidencia": "Listado de directorio expuesto"
-    },
-    {
-      "id": "NIKTO-003",
-      "descripcion": "SSLv3 enabled - vulnerable to POODLE attack",
-      "severidad": "HIGH",
-      "url_afectada": "https://142.251.0.139",
-      "evidencia": "Protocolo SSLv3 obsoleto detectado"
-    },
-    {
-      "id": "NIKTO-004",
-      "descripcion": "Weak cipher suite RC4 detected",
-      "severidad": "MEDIUM",
-      "url_afectada": "https://142.251.0.139",
-      "evidencia": "Cifrado RC4 débil en uso"
-    },
-    {
-      "id": "NIKTO-005",
-      "descripcion": "Self-signed SSL certificate detected",
-      "severidad": "MEDIUM",
-      "url_afectada": "https://142.251.0.139",
-      "evidencia": "Certificado autofirmado - cadena de confianza no verificable"
-    },
-    {
-      "id": "NIKTO-006",
-      "descripcion": "Telnet service exposed on port 23",
-      "severidad": "HIGH",
-      "url_afectada": "http://142.251.0.139:23",
-      "evidencia": "Servicio Telnet sin cifrado expuesto"
-    },
-    {
-      "id": "NIKTO-007",
-      "descripcion": "FTP anonymous login allowed",
-      "severidad": "HIGH",
-      "url_afectada": "ftp://142.251.0.139",
-      "evidencia": "Login anónimo FTP habilitado"
-    },
-    {
-      "id": "NIKTO-008",
-      "descripcion": "Default admin credentials found",
-      "severidad": "CRITICAL",
-      "url_afectada": "http://142.251.0.139/admin",
-      "evidencia": "Credenciales por defecto admin:admin funcionan"
+      "url_afectada": "http://142.251.129.206/uploads/",
+      "evidencia": "Listado de directorio expuesto",
+      "analisis_ia": {
+        "contexto_tecnico": "Análisis IA no disponible",
+        "impacto_potencial": "Evaluación manual requerida",
+        "mitigacion_recomendada": "Consultar documentación",
+        "prioridad_correccion": "REVISAR",
+        "ia_error": "Unterminated string starting at: line 13 column 5 (char 1241)"
+      }
     }
   ],
-  "total_hallazgos": 8,
+  "total_hallazgos": 2,
+  "ia_habilitada": true,
+  "modelo_ia": "minimax-m3:cloud",
   "nota": "Severidad estimada por heurística porque Nikto no siempre entrega severidad normalizada.",
-  "timestamp": "2026-06-12T04:30:15.123456+00:00"
+  "timestamp": "2026-06-27T17:25:20.653352+00:00"
 }

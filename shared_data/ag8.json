@@ -2,48 +2,48 @@
   "agent": "AG8_THREAT_INTELLIGENCE",
   "integrante": 3,
   "target": "google.com",
-  "modo": "mock_demo",
+  "modo": "real_abuseipdb",
+  "api_key_configurada": true,
   "iocs": [
     {
-      "ip": "142.251.0.139",
+      "ip": "142.251.129.206",
       "abuse_score": 0,
       "reputacion": "limpio",
       "campanas_malware": [],
-      "threat_actors": [],
-      "mitre_attack_tactics": [],
-      "indicadores_compromiso": {
-        "tipo": "IP legítima (Google)",
-        "confidence": "High",
-        "observables": {
-          "conexiones_sospechosas": 0,
-          "payloads_maliciosos": 0,
-          "firmas_malware": []
-        }
-      },
-      "analisis_forense": {
-        "volatilidad": "Baja",
-        "persistencia_detectada": false,
-        "artefactos": []
-      },
-      "fuente": "MOCK",
-      "pais": "US",
+      "fuente": "AbuseIPDB",
+      "pais": "CO",
       "isp": "Google LLC",
-      "dominio": "1e100.net",
-      "tipo_uso": "Content Delivery Network",
-      "total_reportes": 0,
-      "detalle": "IP legítima de infraestructura Google. Sin indicadores de compromiso."
+      "dominio": "google.com",
+      "tipo_uso": "Data Center/Web Hosting/Transit",
+      "total_reportes": 1,
+      "detalle": "Consulta de reputación realizada mediante API externa."
+    },
+    {
+      "ip": "45.33.32.156",
+      "abuse_score": 11,
+      "reputacion": "limpio",
+      "campanas_malware": [],
+      "fuente": "AbuseIPDB",
+      "pais": "US",
+      "isp": "Linode",
+      "dominio": "linode.com",
+      "tipo_uso": "Data Center/Web Hosting/Transit",
+      "total_reportes": 5,
+      "detalle": "Consulta de reputación realizada mediante API externa."
     }
   ],
-  "total_iocs": 1,
+  "total_iocs": 2,
+  "ia_habilitada": false,
+  "modelo_ia": null,
   "resumen_amenazas": {
     "maliciosos": 0,
     "sospechosos": 0,
-    "limpios": 1,
+    "limpios": 2,
     "internos": 0,
     "campanas_activas": 0,
     "threat_actors_unicos": 0,
     "mitre_tactics_detected": 0
   },
-  "timestamp": "2026-06-12T04:33:00.000000+00:00",
-  "nota": "MOCK indica dato demostrativo con conceptos del curso: IoCs, malware, threat actors, MITRE ATT&CK, análisis forense. IP de Google sin indicadores maliciosos."
+  "timestamp": "2026-06-27T17:25:59.775369+00:00",
+  "nota": "Modo REAL activado. Sin API key se usa análisis local. Para modo demo, establecer USE_REAL_APIS=false en .env"
 }

@@ -1,200 +1,53 @@
 {
-  "agent": "AG10_COMPLIANCE",
-  "integrante": 4,
-  "target": "google.com",
   "compliance_checks": [
     {
       "framework": "NIST 800-53",
-      "control": "AC-2 (Account Management)",
-      "hallazgo": "Credenciales por defecto admin:admin funcionan",
+      "control": "SI-2 (Flaw Remediation)",
+      "hallazgo": "CVE CVE-1999-1573 detectada: Multiple unknown vulnerabilities in the \"r-cmnds\" (1) remshd, (2) rexecd, (3) rlogind, (4) rlogin, (",
       "estado": "falla",
-      "accion_correctiva": "Implementar controles de acceso estrictos y revisar permisos",
-      "severidad": "critical",
-      "evidencia": "Hallazgo detectado en http://142.251.0.139/admin"
-    },
-    {
-      "framework": "ISO 27001:2022",
-      "control": "A.8.3 (Restricción de acceso a la información)",
-      "hallazgo": "Credenciales por defecto admin:admin funcionan",
-      "estado": "falla",
-      "accion_correctiva": "Aplicar principio de mínimo privilegio y segregación de funciones",
-      "severidad": "critical",
-      "evidencia": "Control de acceso débil identificado"
-    },
-    {
-      "framework": "PCI-DSS 4.0",
-      "control": "Req. 7 (Restrict Access)",
-      "hallazgo": "Credenciales por defecto admin:admin funcionan",
-      "estado": "falla",
-      "accion_correctiva": "Implementar acceso basado en roles (RBAC) y registro de accesos",
-      "severidad": "critical",
-      "evidencia": "Acceso no restringido a recursos críticos"
-    },
-    {
-      "framework": "NIST 800-53",
-      "control": "SC-13 (Cryptographic Protection)",
-      "hallazgo": "SSLv3 habilitado - vulnerable a POODLE",
-      "estado": "falla",
-      "accion_correctiva": "Usar TLS 1.2+, AES-256, RSA-2048+, eliminar algoritmos obsoletos (DES, MD5, SHA-1)",
-      "severidad": "high",
-      "evidencia": "Algoritmo criptográfico débil o obsoleto detectado"
-    },
-    {
-      "framework": "ISO 27001:2022",
-      "control": "A.8.24 (Uso de criptografía)",
-      "hallazgo": "Cifrado RC4 débil detectado",
-      "estado": "falla",
-      "accion_correctiva": "Implementar política de criptografía con algoritmos aprobados",
-      "severidad": "medium",
-      "evidencia": "Configuración criptográfica insegura"
-    },
-    {
-      "framework": "PCI-DSS 4.0",
-      "control": "Req. 4 (Encrypt transmission)",
-      "hallazgo": "SSLv3 habilitado - vulnerable a POODLE",
-      "estado": "falla",
-      "accion_correctiva": "Cifrar datos de titulares de tarjetas en tránsito con TLS 1.2+ y cifrados fuertes",
-      "severidad": "high",
-      "evidencia": "Transmisión sin cifrado adecuado"
-    },
-    {
-      "framework": "GDPR",
-      "control": "Art. 32 (Seguridad del tratamiento)",
-      "hallazgo": "Certificado autofirmado detectado",
-      "estado": "falla",
-      "accion_correctiva": "Garantizar cifrado de datos personales en reposo y en tránsito",
-      "severidad": "medium",
-      "evidencia": "Datos potencialmente expuestos sin cifrado"
-    },
-    {
-      "framework": "OWASP Top 10",
-      "control": "A03:2021 - Injection",
-      "hallazgo": "SQL Injection crítica en parámetro de búsqueda",
-      "estado": "falla",
-      "accion_correctiva": "Validar y sanitizar todas las entradas, usar consultas parametrizadas, ORM seguro",
-      "severidad": "critical",
-      "evidencia": "Vector de inyección identificado"
-    },
-    {
-      "framework": "NIST 800-53",
-      "control": "SI-10 (Information Input Validation)",
-      "hallazgo": "Buffer overflow potencial en campo de login",
-      "estado": "falla",
-      "accion_correctiva": "Implementar validación de entrada en servidor, whitelist vs blacklist",
-      "severidad": "critical",
-      "evidencia": "Falta de validación de entrada"
-    },
-    {
-      "framework": "PCI-DSS 4.0",
-      "control": "Req. 6.5.1 (Injection flaws)",
-      "hallazgo": "SQL Injection crítica en parámetro de búsqueda",
-      "estado": "falla",
-      "accion_correctiva": "Revisar código para prevenir inyección SQL, LDAP, OS Command",
-      "severidad": "critical",
-      "evidencia": "Vulnerabilidad de inyección detectada"
-    },
-    {
-      "framework": "CIS Controls",
-      "control": "4.1 (Secure Configuration)",
-      "hallazgo": "Directory indexing found",
-      "estado": "parcial",
-      "accion_correctiva": "Aplicar hardening, eliminar servicios innecesarios, configurar firewalls",
-      "severidad": "medium",
-      "evidencia": "Configuración insegura detectada"
-    },
-    {
-      "framework": "ISO 27001:2022",
-      "control": "A.8.9 (Gestión de configuración)",
-      "hallazgo": "X-Frame-Options header is not present",
-      "estado": "parcial",
-      "accion_correctiva": "Establecer línea base de configuración segura y control de cambios",
-      "severidad": "low",
-      "evidencia": "Desviación de configuración segura"
+      "accion_correctiva": "Aplicar parche de seguridad para tcpwrapped unknown",
+      "severidad": "HIGH",
+      "evidencia": "CVSS Score: 10.0, Puerto: 31337"
     },
     {
       "framework": "NIST 800-53",
       "control": "SI-2 (Flaw Remediation)",
-      "hallazgo": "CVE CVE-2024-SQLi-CRITICAL detectada: EJEMPLO: SQL Injection crítica en parámetro de búsqueda permite acceso a base de datos",
+      "hallazgo": "CVE CVE-1999-1584 detectada: Unknown vulnerability in (1) loadmodule, and (2) modload if modload is installed with setuid/setgid ",
       "estado": "falla",
-      "accion_correctiva": "Aplicar parche de seguridad para web-application google-web-app",
-      "severidad": "critical",
-      "evidencia": "CVSS Score: 9.8, Puerto: 443"
+      "accion_correctiva": "Aplicar parche de seguridad para tcpwrapped unknown",
+      "severidad": "HIGH",
+      "evidencia": "CVSS Score: 10.0, Puerto: 31337"
     },
     {
       "framework": "NIST 800-53",
       "control": "SI-2 (Flaw Remediation)",
-      "hallazgo": "CVE CVE-2024-BUFFER-OVERFLOW detectada: EJEMPLO: Buffer overflow potencial detectado en campo de login",
+      "hallazgo": "CVE CVE-1999-1589 detectada: Unspecified vulnerability in crontab in IBM AIX 3.2 allows local users to gain root privileges via u",
       "estado": "falla",
-      "accion_correctiva": "Aplicar parche de seguridad para web-server unknown",
-      "severidad": "critical",
-      "evidencia": "CVSS Score: 9.0, Puerto: 443"
-    },
-    {
-      "framework": "SOC 2",
-      "control": "CC6.1 (Logical Access)",
-      "hallazgo": "Session fixation vulnerability in authentication",
-      "estado": "falla",
-      "accion_correctiva": "Restringir acceso lógico mediante autenticación adecuada",
-      "severidad": "high",
-      "evidencia": "Control de acceso lógico insuficiente"
+      "accion_correctiva": "Aplicar parche de seguridad para tcpwrapped unknown",
+      "severidad": "HIGH",
+      "evidencia": "CVSS Score: 7.2, Puerto: 31337"
     }
   ],
   "resumen": {
-    "total_checks": 15,
+    "total_checks": 3,
     "cumple": 0,
-    "falla": 12,
-    "parcial": 3,
+    "falla": 3,
+    "parcial": 0,
     "nivel_cumplimiento": "bajo",
     "porcentaje_cumplimiento": 0.0
   },
   "por_framework": {
     "NIST 800-53": {
-      "total": 4,
-      "cumple": 0,
-      "falla": 4,
-      "parcial": 0
-    },
-    "ISO 27001:2022": {
-      "total": 3,
-      "cumple": 0,
-      "falla": 1,
-      "parcial": 2
-    },
-    "PCI-DSS 4.0": {
       "total": 3,
       "cumple": 0,
       "falla": 3,
-      "parcial": 0
-    },
-    "GDPR": {
-      "total": 1,
-      "cumple": 0,
-      "falla": 1,
-      "parcial": 0
-    },
-    "OWASP Top 10": {
-      "total": 1,
-      "cumple": 0,
-      "falla": 1,
-      "parcial": 0
-    },
-    "CIS Controls": {
-      "total": 1,
-      "cumple": 0,
-      "falla": 0,
-      "parcial": 1
-    },
-    "SOC 2": {
-      "total": 1,
-      "cumple": 0,
-      "falla": 1,
       "parcial": 0
     }
   },
   "excepciones": [
     {
       "hallazgo_id": "EXCEPTION-001",
-      "control": "AC-2 (Account Management)",
+      "control": "SI-2 (Flaw Remediation)",
       "justificacion": "Remediación planificada en próximo sprint - riesgo aceptado temporalmente",
       "aprobador": "CISO",
       "fecha_expiracion": "2026-12-31",
@@ -202,26 +55,21 @@
       "plan_mitigacion": "Implementar control compensatorio: monitoreo aumentado"
     }
   ],
-  "controles_compensatorios": [
-    {
-      "control_original": "AC-2 (Account Management)",
-      "control_compensatorio": "Segmentación de red + VPN obligatoria para datos sensibles",
-      "nivel_compensacion": "parcial",
-      "efectividad": "70%",
-      "nota": "Reducir superficie de exposición mientras se actualiza criptografía"
-    }
-  ],
+  "controles_compensatorios": [],
+  "agent": "AG10_COMPLIANCE",
+  "integrante": 4,
+  "timestamp": "2026-06-27T17:26:14.192560+00:00",
+  "target": null,
   "evidencias_auditoria": {
     "fuentes_datos": [
       "ag6.json",
       "ag7.json",
       "ag9.json"
     ],
-    "metodo_analisis": "rule-based",
-    "timestamp_analisis": "2026-06-12T05:00:00.000000+00:00",
+    "metodo_analisis": "AI-assisted",
+    "timestamp_analisis": "2026-06-27T17:26:14.192582+00:00",
     "hash_ag6": "SHA256:mock_hash_ag6",
     "hash_ag7": "SHA256:mock_hash_ag7",
     "hash_ag9": "SHA256:mock_hash_ag9"
-  },
-  "timestamp": "2026-06-12T05:00:00.000000+00:00"
+  }
 }
