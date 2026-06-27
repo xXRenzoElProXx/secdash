@@ -260,15 +260,6 @@ shared_data/*.json
 .streamlit/
 ```
 
-También puede crearse el archivo vacío:
-
-```bash
-mkdir -p shared_data
-touch shared_data/.gitkeep
-```
-
----
-
 ## 10. Ejecución manual de agentes
 
 Aunque el dashboard puede ejecutar todos los agentes, también pueden ejecutarse manualmente para pruebas:
